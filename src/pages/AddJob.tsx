@@ -14,7 +14,7 @@ async function generateAIAnswers(questions: string[], jobDescription: string, ge
 You're helping a candidate apply for a job. Use the user's profile and job description to answer the questions clearly and professionally.
 
 Rules for your response:
-1. Keep the length to a maximum of 1–2 concise paragraphs.
+1. Keep the length to a maximum of 1 concise paragraph.
 2. Use bullet points for listing skills or achievements
 3. Highlight relevant experience that matches the job requirements
 4. Be specific and provide concrete examples
