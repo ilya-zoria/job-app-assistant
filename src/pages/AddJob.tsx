@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import { supabase } from "../lib/supabaseClient"
 import { toast } from "sonner"
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 async function generateAIAnswers(questions: string[], jobDescription: string, geminiKey: string, userProfile: any) {
   const genAI = new GoogleGenerativeAI(geminiKey);
@@ -14,7 +17,7 @@ async function generateAIAnswers(questions: string[], jobDescription: string, ge
 You're helping a candidate apply for a job. Use the user's profile and job description to answer the questions clearly and professionally.
 
 Rules for your response:
-1. Keep the length to a maximum of 1 concise paragraph.
+1. Keep the length to a maximum of one concise paragraph.
 2. Use bullet points for listing skills or achievements
 3. Highlight relevant experience that matches the job requirements
 4. Be specific and provide concrete examples
@@ -103,31 +106,50 @@ export default function AddJob() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const filteredQuestions = questions.filter(q => q.trim() !== "")
-    const { data, error } = await supabase
-      .from("jobs")
-      .insert({
-        user_id: userId,
-        company_name: companyName,
-        job_description: jobDescription,
-        custom_questions: filteredQuestions
-      })
-      .select()
-      .single()
 
-    if (error) {
-      toast.error("Error saving job")
-      return
-    }
+    const saveJobPromise = new Promise(async (resolve, reject) => {
+      const { data, error } = await supabase
+        .from("jobs")
+        .insert({
+          user_id: userId,
+          company_name: companyName,
+          job_description: jobDescription,
+          custom_questions: filteredQuestions
+        })
+        .select()
+        .single()
 
-    toast.success("Job saved!")
+      if (error) {
+        reject(error);
+      } else {
+        resolve(data);
+      }
+    });
 
-    if (!data) return
+    let savedJobData: any = null;
+
+    await toast.promise(
+      saveJobPromise,
+      {
+        loading: "Saving job...",
+        success: (data) => {
+          savedJobData = data;
+          return "Job saved!";
+        },
+        error: (err: Error) => {
+          console.error("Error saving job:", err);
+          return err.message || "Error saving job";
+        }
+      }
+    );
+
+    if (!savedJobData) return;
 
     const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
     console.log('Gemini API Key present:', !!geminiKey);
     if (!geminiKey) {
       toast.error("Gemini API key is missing!");
-      navigate(`/job/${data.id}`);
+      navigate(`/job/${savedJobData.id}`);
       return;
     }
 
@@ -147,7 +169,7 @@ export default function AddJob() {
           const { error: updateError } = await supabase
             .from("jobs")
             .update({ ai_answers: aiAnswers })
-            .eq("id", data.id);
+            .eq("id", savedJobData.id);
             
           if (updateError) {
             console.error("Error updating job with AI answers:", updateError);
@@ -165,24 +187,24 @@ export default function AddJob() {
       console.error("AI answer generation failed:", err)
       toast.error("AI answer generation failed.")
     }
-    navigate(`/job/${data.id}`)
+    navigate(`/job/${savedJobData.id}`)
   }
 
   return (
-    <div className="mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Add Job</h1>
+    <div className="w-full max-w-4xl bg-background py-8 space-y-6">
+      <Link to="/dashboard" className="text-primary hover:underline">&larr; Back to Dashboard</Link>
+      <h1 className="text-2xl font-bold text-foreground">Add Job</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input
+        <Input
           type="text"
           placeholder="Company Name"
-          className="w-full border p-2 rounded"
           value={companyName}
           onChange={(e) => setCompanyName(e.target.value)}
           required
         />
         <textarea
           placeholder="Job Description"
-          className="w-full border p-2 rounded"
+          className="input min-h-[120px]"
           rows={5}
           value={jobDescription}
           onChange={(e) => setJobDescription(e.target.value)}
@@ -190,22 +212,22 @@ export default function AddJob() {
         />
         <div className="space-y-2">
           {questions.map((q, i) => (
-            <input
+            <Input
               key={i}
               type="text"
               placeholder={`Custom Question #${i + 1}`}
-              className="w-full border p-2 rounded"
               value={q}
               onChange={(e) => handleChangeQuestion(i, e.target.value)}
             />
           ))}
-          <button type="button" onClick={handleAddQuestion} className="text-blue-600 underline">
+          <Button type="button" onClick={handleAddQuestion} variant="link" className="text-primary px-0">
             + Add another question
-          </button>
+          </Button>
         </div>
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+        <Button type="submit" disabled={false} className="w-full bg-primary hover:bg-primary-hover">
+          {false && <Loader2 className="animate-spin w-4 h-4 mr-2" />}
           Save Job
-        </button>
+        </Button>
       </form>
     </div>
   )

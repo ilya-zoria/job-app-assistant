@@ -21,9 +21,9 @@ export default function Signup() {
   }
 
   return (
-    <div className="bg-white p-8 rounded-lg shadow-lg">
-      <h1 className="text-2xl font-bold mb-6 text-center">Sign Up</h1>
-      {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
+    <div className="w-full max-w-md bg-background p-8 rounded-lg shadow-lg space-y-6">
+      <h1 className="text-2xl font-bold mb-6 text-center text-foreground">Sign Up</h1>
+      {error && <p className="text-destructive mb-4 text-center">{error}</p>}
       <form onSubmit={handleSignup} className="space-y-4">
         <Input
           type="email"
@@ -39,11 +39,11 @@ export default function Signup() {
           onChange={e => setPassword(e.target.value)}
           required
         />
-        <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+        <Button type="submit" className="w-full bg-primary hover:bg-primary-hover">
           Sign Up
         </Button>
-        <p className="text-sm text-center mt-4">
-          Already have an account? <Link to="/login" className="text-blue-600 hover:underline">Login</Link>
+        <p className="text-sm text-center mt-4 text-muted">
+          Already have an account? <Link to="/login" className="text-primary hover:underline">Login</Link>
         </p>
       </form>
     </div>

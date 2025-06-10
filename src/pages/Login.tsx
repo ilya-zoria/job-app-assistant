@@ -21,9 +21,9 @@ export default function Login() {
   }
 
   return (
-    <div className="bg-white p-8 rounded-lg shadow-lg">
-      <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
-      {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
+    <div className="w-full max-w-md bg-background p-8 rounded-lg shadow-lg space-y-6">
+      <h1 className="text-2xl font-bold mb-6 text-center text-foreground">Login</h1>
+      {error && <p className="text-destructive mb-4 text-center">{error}</p>}
       <form onSubmit={handleLogin} className="space-y-4">
         <Input
           type="email"
@@ -39,11 +39,11 @@ export default function Login() {
           onChange={e => setPassword(e.target.value)}
           required
         />
-        <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+        <Button type="submit" className="w-full bg-primary hover:bg-primary-hover">
           Login
         </Button>
-        <p className="text-sm text-center mt-4">
-          No account? <Link to="/signup" className="text-blue-600 hover:underline">Sign up</Link>
+        <p className="text-sm text-center mt-4 text-muted">
+          No account? <Link to="/signup" className="text-primary hover:underline">Sign up</Link>
         </p>
       </form>
     </div>

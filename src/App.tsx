@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import MainLayout from './components/layout/MainLayout';
+import DefaultLayout from './components/layout/DefaultLayout';
 import AuthLayout from './components/layout/AuthLayout';
-import WaitlistLayout from './components/layout/WaitlistLayout';
 import Waitlist from './pages/Waitlist';
 import JobDetails from "./pages/JobDetails";
 import AddJob from "./pages/AddJob";
@@ -16,24 +15,20 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Public routes */}
-        <Route element={<WaitlistLayout />}>
+        {/* Routes using DefaultLayout */}
+        <Route element={<DefaultLayout />}>
           <Route path="/" element={<Waitlist />} />
           <Route path="/success" element={<Success />} />
-        </Route>
-        
-        {/* Auth routes */}
-        <Route element={<AuthLayout />}>
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-        </Route>
-
-        {/* Protected routes with layout */}
-        <Route element={<MainLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/user-info" element={<UserInfo />} />
           <Route path="/add-job" element={<AddJob />} />
           <Route path="/job/:id" element={<JobDetails />} />
+        </Route>
+        
+        {/* Auth routes (if they don't need the common header) */}
+        <Route element={<AuthLayout />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
         </Route>
       </Routes>
       <Toaster />

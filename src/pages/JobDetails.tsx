@@ -20,6 +20,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { motion, AnimatePresence } from "framer-motion"
+import { Button } from "@/components/ui/button"
 
 export default function JobDetails() {
   const { id } = useParams()
@@ -109,37 +110,37 @@ export default function JobDetails() {
   if (!job) return <div className="py-8 text-center">Job not found</div>
 
   return (
-    <div className="mx-auto">
+    <div className="w-full max-w-4xl bg-background py-8 space-y-6">
       <div className="mb-4 flex items-center justify-between">
-        <Link to="/dashboard" className="text-blue-600 hover:underline">&larr; Back to Dashboard</Link>
+        <Link to="/dashboard" className="text-primary hover:underline">&larr; Back to Dashboard</Link>
         <Dialog>
           <DialogTrigger asChild>
-            <button className="bg-red-600 text-white px-4 py-2 rounded ml-4">Delete Job</button>
+            <Button variant="destructive" className="ml-4">Delete Job</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Delete Job</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-foreground">Delete Job</DialogTitle>
+              <DialogDescription className="text-muted">
                 Are you sure you want to delete this job? This action cannot be undone.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <DialogClose asChild>
-                <button className="px-4 py-2 rounded border">Cancel</button>
+                <Button variant="outline">Cancel</Button>
               </DialogClose>
-              <button onClick={handleDelete} className="bg-red-600 text-white px-4 py-2 rounded">Delete Job</button>
+              <Button onClick={handleDelete} variant="destructive">Delete Job</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
-      <h1 className="text-2xl font-bold mb-2">{job.company_name}</h1>
-      <p className="mb-4 whitespace-pre-wrap">{job.job_description}</p>
+      <h1 className="text-2xl font-bold text-foreground mb-2">{job.company_name}</h1>
+      <p className="mb-4 text-foreground whitespace-pre-wrap">{job.job_description}</p>
 
-      <h2 className="text-lg font-semibold mb-4">Custom Questions:</h2>
+      <h2 className="text-lg font-bold text-foreground mb-4">Custom Questions:</h2>
       <Accordion type="single" collapsible className="w-full">
         {job.custom_questions?.map((q: string, i: number) => (
           <AccordionItem key={i} value={`item-${i}`}>
-            <AccordionTrigger className="text-left">
+            <AccordionTrigger className="text-left text-foreground hover:no-underline">
               <span className="font-medium">{q}</span>
             </AccordionTrigger>
             <AccordionContent>
@@ -149,7 +150,7 @@ export default function JobDetails() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="flex items-center gap-2 text-gray-500 mt-2"
+                    className="flex items-center gap-2 text-muted mt-2"
                   >
                     <Loader2 className="animate-spin h-4 w-4" />
                     <span>Generating answer...</span>
@@ -159,7 +160,7 @@ export default function JobDetails() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="text-gray-700 mt-2 pl-4 border-l-2 border-blue-200 prose prose-sm max-w-none"
+                    className="text-foreground mt-2 pl-4 border-l-2 border-primary/50 prose prose-sm max-w-none"
                   >
                     {job.ai_answers[i].split('\n').map((paragraph: string, index: number) => {
                       // Handle markdown-style bold text
@@ -167,13 +168,13 @@ export default function JobDetails() {
                       // Handle bullet points
                       if (paragraph.trim().startsWith('*')) {
                         return (
-                          <ul key={index} className="list-disc ml-6 my-2">
+                          <ul key={index} className="list-disc ml-6 my-2 text-foreground">
                             <li dangerouslySetInnerHTML={{ __html: formattedParagraph.replace(/^\*\s*/, '') }} />
                           </ul>
                         );
                       }
                       return (
-                        <p key={index} className="my-2" dangerouslySetInnerHTML={{ __html: formattedParagraph }} />
+                        <p key={index} className="my-2 text-foreground" dangerouslySetInnerHTML={{ __html: formattedParagraph }} />
                       );
                     })}
                   </motion.div>

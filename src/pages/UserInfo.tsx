@@ -64,29 +64,44 @@ export default function UserInfo() {
       cv_text: cvText,
     }
 
-    const { error } = await toast.promise(
-      supabase.from("user_profiles").upsert(updates, { onConflict: 'user_id' }),
+    // Create a promise that resolves on success and rejects on error for toast.promise
+    const saveOperationPromise = new Promise<void>(async (resolve, reject) => {
+      const { error } = await supabase
+        .from("user_profiles")
+        .upsert(updates, { onConflict: 'user_id' });
+
+      if (error) {
+        reject(error);
+      } else {
+        resolve(); // Resolve with void on success
+      }
+    });
+
+    await toast.promise(
+      saveOperationPromise,
       {
         loading: "Saving...",
-        success: "Profile saved!",
-        error: "Error saving profile",
+        success: () => {
+          setSaved(true)
+          setTimeout(() => setSaved(false), 2000)
+          return "Profile saved!";
+        },
+        error: (err: Error) => {
+          console.error("Error saving profile:", err);
+          return err.message || "Error saving profile";
+        },
       }
     )
-
-    if (!error) {
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
-    }
 
     setSaving(false)
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-4xl bg-background py-8 space-y-6">
       <div>
-        <Link to="/dashboard" className="text-blue-600 hover:underline">&larr; Back to Dashboard</Link>
+        <Link to="/dashboard" className="text-primary hover:underline">&larr; Back to Dashboard</Link>
       </div>
-      <h1 className="text-2xl font-bold">Your Info</h1>
+      <h1 className="text-2xl font-bold text-foreground">Your Info</h1>
       <form onSubmit={handleSave} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
@@ -111,7 +126,7 @@ export default function UserInfo() {
         <textarea
           placeholder="CV Text (optional)"
           rows={5}
-          className="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="input"
           value={cvText}
           onChange={(e) => setCvText(e.target.value)}
         />
