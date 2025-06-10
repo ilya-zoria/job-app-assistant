@@ -5,8 +5,19 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
-// Use environment variable for API URL, fallback to localhost for development
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+// Determine API URL based on the current environment
+const getApiUrl = () => {
+  // In development, use localhost
+  if (import.meta.env.DEV) {
+    return "http://localhost:3000";
+  }
+  
+  // In production, use the same origin as the frontend
+  // This ensures the API is called on the same domain
+  return window.location.origin;
+};
+
+const API_URL = getApiUrl();
 
 // Log the API URL in development to help with debugging
 if (import.meta.env.DEV) {
