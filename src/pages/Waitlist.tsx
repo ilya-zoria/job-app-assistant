@@ -14,7 +14,7 @@ const getApiUrl = () => {
   
   // In production, use the same origin as the frontend
   // This ensures the API is called on the same domain
-  return window.location.origin;
+  return "https://job-app-assistant.vercel.app";
 };
 
 const API_URL = getApiUrl();
