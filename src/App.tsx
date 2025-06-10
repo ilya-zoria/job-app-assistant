@@ -9,7 +9,6 @@ import Dashboard from "./pages/Dashboard";
 import UserInfo from "./pages/UserInfo";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import TestEmail from "./pages/TestEmail";
 import Success from "./pages/Success";
 import { Toaster } from "./components/ui/sonner";
 
@@ -20,7 +19,6 @@ function App() {
         {/* Public routes */}
         <Route element={<WaitlistLayout />}>
           <Route path="/" element={<Waitlist />} />
-          <Route path="/test-email" element={<TestEmail />} />
           <Route path="/success" element={<Success />} />
         </Route>
         
