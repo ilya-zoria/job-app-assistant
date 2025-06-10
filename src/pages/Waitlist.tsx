@@ -5,7 +5,13 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
+// Use environment variable for API URL, fallback to localhost for development
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
+// Log the API URL in development to help with debugging
+if (import.meta.env.DEV) {
+  console.log("Using API URL:", API_URL);
+}
 
 export default function Waitlist() {
   const [email, setEmail] = useState('');
