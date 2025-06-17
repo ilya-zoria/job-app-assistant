@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -95,72 +94,58 @@ export default function Waitlist() {
   };
 
   return (
-    <div className="bg-gradient-to-b from-muted-background to-background py-16 w-full">
-      {/* Hero Section */}
-      <div className="py-8 text-center max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-8">
-            Meet your dream job today
-          </h1>
-          <p className="text-xl text-muted mb-12 max-w-2xl mx-auto">
-            Our AI-powered assistant helps you craft the perfect job application tailored to each position. Join the waitlist to get early access.
-          </p>
-        </div>
-
-      {/* Features Section */}
-      <div className="py-8">
-        <div className="grid md:grid-cols-3 gap-8">
-          <Card className="p-8 hover:shadow-lg transition-shadow">
-            <h3 className="text-2xl font-semibold mb-4 text-foreground">Smart Applications</h3>
-            <p className="text-muted">
-              Our AI-powered assistant helps you craft the perfect job application tailored to each position.
-            </p>
-          </Card>
-          <Card className="p-8 hover:shadow-lg transition-shadow">
-            <h3 className="text-2xl font-semibold mb-4 text-foreground">Time Saving</h3>
-            <p className="text-muted">
-              Automate repetitive tasks and focus on what matters most - landing your dream job.
-            </p>
-          </Card>
-          <Card className="p-8 hover:shadow-lg transition-shadow">
-            <h3 className="text-2xl font-semibold mb-4 text-foreground">Early Access</h3>
-            <p className="text-muted">
-              Get exclusive access to new features and provide feedback to shape the future of our platform.
-            </p>
-          </Card>
-        </div>
-      </div>
-
-      {/* CTA Section */}
-      <div className="py-8">
-        <Card className="max-w-2xl mx-auto p-12 bg-gradient-to-br from-primary/5 to-accent/5">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-              Get Early Access
-            </h2>
-            <p className="text-muted text-lg">
-              Join our waitlist to be notified when we launch and receive exclusive early access.
-            </p>
+    <div className="flex flex-col md:flex-row min-h-screen h-screen">
+      {/* Left Column */}
+      <div className="w-full max-w-[476px] flex flex-col justify-center px-12 py-10 h-full min-h-screen mx-auto">
+        <div>
+          {/* Logo */}
+          <div className="flex items-center mb-12">
+            <img src="/src/assets/logo.svg" alt="Resume builder logo" className="h-32 w-32 mr-2" />
           </div>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 h-12 text-base"
-                disabled={isLoading}
-              />
-              <Button 
-                type="submit" 
-                disabled={isLoading}
-                className="h-12 px-8 text-base bg-primary hover:bg-primary-hover"
-              >
-                {isLoading ? "Joining..." : "Join Waitlist"}
-              </Button>
-            </div>
+          {/* Heading */}
+          <h1 className="text-5xl md:text-7xl font-instrument-serif italic font-medium mb-6 leading-tight text-gray-900">Meet your dream job<br className="hidden md:block" /> today faster</h1>
+          {/* Subheading */}
+          <p className="text-lg text-gray-600 mb-8">Join our waitlist to be notified when we launch and receive exclusive early access.</p>
+          {/* Waitlist Form */}
+          <form onSubmit={handleSubmit} className="flex items-center gap-2 mb-12 max-w-md">
+            <Input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
+              className="flex-1 border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900"
+            />
+            <Button
+              type="submit"
+              className="bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 transition-colors"
+              disabled={isLoading}
+            >
+              {isLoading ? "Joining..." : "Join waitlist"}
+            </Button>
           </form>
-        </Card>
+          {/* Features */}
+          <div className="space-y-6 mb-8">
+            <div>
+              <h3 className="font-bold text-lg text-gray-900 mb-1">Tailored Resume</h3>
+              <p className="text-gray-600">Highlight your most relevant skills and achievements. Our AI builds a new resume for every job — no editing needed.</p>
+            </div>
+            <div>
+              <h3 className="font-bold text-lg text-gray-900 mb-1">Custom Answers</h3>
+              <p className="text-gray-600">Paste any job description and get instant, thoughtful responses for application questions — in your own voice.</p>
+            </div>
+            <div>
+              <h3 className="font-bold text-lg text-gray-900 mb-1">Stay on Top of Your Job Hunt</h3>
+              <p className="text-gray-600">Keep track of where you've applied, what you sent, and what's next — all in one clean, organized dashboard.</p>
+            </div>
+          </div>
+        </div>
+        {/* Footer */}
+        <div className="text-xs text-gray-400 mt-8">Designed and built by <a href="https://ilyazoria.design/" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">Ilya Zoria</a></div>
+      </div>
+      {/* Right Column */}
+      <div className="w-full md:w-1/2 h-full min-h-screen">
+        <img src="/waitlist-photo.png" alt="Waitlist visual" className="object-cover w-full h-full min-h-screen" />
       </div>
     </div>
   );
