@@ -180,7 +180,7 @@ app.post('/api/waitlist', limiter, async (req, res) => {
     const msg = {
       to: email,
       from: fromEmail,
-      subject: 'Welcome to the Waitlist!',
+      subject: 'Welcome to the Resume Builder waitlist 🤘',
       text: `Thank you for joining our waitlist! We'll keep you updated on our progress.`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

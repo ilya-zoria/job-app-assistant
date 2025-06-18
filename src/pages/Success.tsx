@@ -16,7 +16,7 @@ export default function Success() {
               <Button 
                 className="px-5 py-6 text-base bg-primary hover:bg-primary-hover flex items-center justify-center gap-2"
               >
-                <img src="/src/assets/ic_tiktok.svg" alt="TikTok" className="w-5 h-5 mr-2" />
+                <img src="/assets/ic_tiktok.svg" alt="TikTok" className="w-5 h-5 mr-2" />
                 Follow us on Tiktok
               </Button>
             </Link>
