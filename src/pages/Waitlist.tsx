@@ -72,7 +72,6 @@ export default function Waitlist() {
       }
 
       if (data.success) {
-        toast.success("Welcome to the waitlist!");
         navigate("/success");
       } else {
         throw new Error(data.error || "Failed to join waitlist");
