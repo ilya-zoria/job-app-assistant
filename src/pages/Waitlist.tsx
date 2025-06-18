@@ -158,7 +158,12 @@ export default function Waitlist() {
           </div>
         </div>
         {/* Footer */}
-        <div className="text-xs text-gray-400 mt-8">Designed and built by <a href="https://ilyazoria.design/" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">Ilya Zoria</a></div>
+        <div className="flex w-full justify-between text-xs text-gray-400 mt-8">
+          <span>
+            Designed and built by <a href="https://ilyazoria.design/" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">Ilya Zoria</a>
+          </span>
+          <a href="https://www.tiktok.com/@resume.builder.ai" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">TikTok</a>
+        </div>
       </div>
       {/* Right Column */}
       <div className="hidden md:block w-full md:w-1/2 h-full min-h-screen">
