@@ -97,7 +97,7 @@ export default function Waitlist() {
   return (
     <div className="flex flex-col md:flex-row min-h-screen h-screen bg-[#F0F1EC]">
       {/* Left Column */}
-      <div className="w-full max-w-[476px] flex flex-col justify-start md:justify-center px-10 md:px-12 py-6 md:py-10 h-screen md:h-auto mx-auto overflow-y-auto">
+      <div className="w-full max-w-xl flex flex-col justify-start md:justify-center px-10 md:px-12 py-6 md:py-10 h-screen md:h-auto mx-auto overflow-y-auto">
         <div>
           {/* Logo */}
           <div className="flex items-center mb-12">
@@ -110,7 +110,7 @@ export default function Waitlist() {
             style={{position: 'relative'}}
             >
             <VariableProximity
-              label={'Meet your dream job faster'}
+              label={'Apply smarter with AI-tailored resumes'}
               className="text-5xl md:text-7xl italic leading-tight text-gray-900"
               fromFontVariationSettings="'wght' 300, 'opsz' 9"
               toFontVariationSettings="'wght' 900, 'opsz' 40"
