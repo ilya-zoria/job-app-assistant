@@ -98,7 +98,7 @@ export default function Waitlist() {
   return (
     <div className="flex flex-col md:flex-row min-h-screen h-screen">
       {/* Left Column */}
-      <div className="w-full max-w-[476px] flex flex-col justify-center px-12 py-10 h-full min-h-screen mx-auto">
+      <div className="w-full max-w-[476px] flex flex-col justify-start md:justify-center px-12 py-10 h-screen md:h-full min-h-screen mx-auto overflow-y-auto">
         <div>
           {/* Logo */}
           <div className="flex items-center mb-12">
@@ -161,7 +161,7 @@ export default function Waitlist() {
         <div className="text-xs text-gray-400 mt-8">Designed and built by <a href="https://ilyazoria.design/" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">Ilya Zoria</a></div>
       </div>
       {/* Right Column */}
-      <div className="w-full md:w-1/2 h-full min-h-screen">
+      <div className="hidden md:block w-full md:w-1/2 h-full min-h-screen">
         <img src="/waitlist-photo.png" alt="Waitlist visual" className="object-cover w-full h-full min-h-screen" />
       </div>
     </div>
