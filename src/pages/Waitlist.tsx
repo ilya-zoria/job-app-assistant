@@ -100,7 +100,7 @@ export default function Waitlist() {
         <div>
           {/* Logo */}
           <div className="flex items-center mb-12">
-            <img src="/src/assets/logo.svg" alt="Resume builder logo" className="h-32 w-32 mr-2" />
+            <img src="/logo.svg" alt="Resume builder logo" className="h-32 w-32 mr-2" />
           </div>
           {/* Heading */}
           <h1 className="text-5xl md:text-7xl font-instrument-serif italic font-medium mb-6 leading-tight text-gray-900">Meet your dream job<br className="hidden md:block" /> today faster</h1>
