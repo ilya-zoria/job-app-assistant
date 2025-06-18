@@ -184,10 +184,10 @@ app.post('/api/waitlist', limiter, async (req, res) => {
       text: `Thank you for joining our waitlist! We'll keep you updated on our progress.`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #2563eb;">Welcome to the Waitlist!</h1>
+          <h1>Welcome to the Waitlist!</h1>
           <p>Thank you for joining our waitlist! We're excited to have you on board.</p>
           <p>We'll keep you updated on our progress and let you know as soon as we launch.</p>
-          <p>Best regards,<br>The Team</p>
+          <p>Best regards,<br>Ilya Zoria, Founder of <a href="https://www.resumebuilderai.xyz/" target="_blank" rel="noopener noreferrer">Resume Builder AI</a></p>
         </div>
       `,
     };
