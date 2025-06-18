@@ -98,7 +98,7 @@ export default function Waitlist() {
   return (
     <div className="flex flex-col md:flex-row min-h-screen h-screen bg-[#F0F1EC]">
       {/* Left Column */}
-      <div className="w-full max-w-[476px] flex flex-col justify-start md:justify-center px-10 md:px-12 py-6 md:py-10 h-screen md:h-full min-h-screen mx-auto overflow-y-auto">
+      <div className="w-full max-w-[476px] flex flex-col justify-start md:justify-center px-10 md:px-12 py-6 md:py-10 h-screen md:h-auto mx-auto overflow-y-auto">
         <div>
           {/* Logo */}
           <div className="flex items-center mb-12">
