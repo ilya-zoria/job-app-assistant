@@ -144,15 +144,15 @@ export default function Waitlist() {
           <div className="space-y-6 mb-8">
             <div>
               <h3 className="font-bold text-lg text-gray-900 mb-1">Tailored Resume</h3>
-              <p className="text-gray-500">Highlight your most relevant skills and achievements. Our AI builds a new resume for every job — no editing needed.</p>
+              <p className="text-gray-500">Instantly create a resume that fits the job with your top skills highlighted.</p>
             </div>
             <div>
               <h3 className="font-bold text-lg text-gray-900 mb-1">Custom Answers</h3>
-              <p className="text-gray-500">Paste any job description and get instant, thoughtful responses for application questions — in your own voice.</p>
+              <p className="text-gray-500">Paste any job description and get instant, thoughtful responses for application questions</p>
             </div>
             <div>
-              <h3 className="font-bold text-lg text-gray-900 mb-1">Stay on Top of Your Job Hunt</h3>
-              <p className="text-gray-500">Keep track of where you've applied, what you sent, and what's next — all in one clean, organized dashboard.</p>
+              <h3 className="font-bold text-lg text-gray-900 mb-1">Track Your Applications</h3>
+              <p className="text-gray-500">See what you’ve applied to, what’s pending, and what’s next, all in one place.</p>
             </div>
           </div>
         </div>
