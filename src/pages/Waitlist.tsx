@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import VariableProximity from '@/components/VariableProximity';
 
 // Determine API URL based on the current environment
 const getApiUrl = () => {
@@ -27,6 +28,7 @@ export default function Waitlist() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const containerRef = useRef(null);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -103,9 +105,24 @@ export default function Waitlist() {
             <img src="/logo.svg" alt="Resume builder logo" className="h-32 w-32 mr-2" />
           </div>
           {/* Heading */}
-          <h1 className="text-5xl md:text-7xl font-instrument-serif italic font-medium mb-6 leading-tight text-gray-900">Meet your dream job<br className="hidden md:block" /> today faster</h1>
+          {/* <h1 className="text-5xl md:text-7xl font-instrument-serif italic font-medium mb-6 leading-tight text-gray-900">Meet your dream job faster</h1> */}
+          <div
+            ref={containerRef}
+            style={{position: 'relative'}}
+            >
+            <VariableProximity
+              label={'Meet your dream job faster'}
+              className="text-5xl md:text-7xl italic leading-tight text-gray-900"
+              fromFontVariationSettings="'wght' 300, 'opsz' 9"
+              toFontVariationSettings="'wght' 900, 'opsz' 40"
+              containerRef={containerRef}
+              radius={100}
+              falloff="exponential"
+              style={{ fontFamily: "'Savate', sans-serif" }}
+            />
+          </div>
           {/* Subheading */}
-          <p className="text-lg text-gray-600 mb-8">Join our waitlist to be notified when we launch and receive exclusive early access.</p>
+          <p className="text-lg text-gray-500 mt-12 mb-8">Join our waitlist to be notified when we launch and receive exclusive early access.</p>
           {/* Waitlist Form */}
           <form onSubmit={handleSubmit} className="flex items-center gap-2 mb-12 max-w-md">
             <Input
@@ -114,11 +131,11 @@ export default function Waitlist() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
-              className="flex-1 border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900"
+              className="flex-1 border border-gray-300 bg-white text-gray-900 text-base placeholder:text-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 px-3 py-5"
             />
             <Button
               type="submit"
-              className="bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 transition-colors"
+              className="bg-gray-900 text-white rounded-md font-medium hover:bg-gray-800 transition-colors px-5 py-5"
               disabled={isLoading}
             >
               {isLoading ? "Joining..." : "Join waitlist"}
@@ -128,15 +145,15 @@ export default function Waitlist() {
           <div className="space-y-6 mb-8">
             <div>
               <h3 className="font-bold text-lg text-gray-900 mb-1">Tailored Resume</h3>
-              <p className="text-gray-600">Highlight your most relevant skills and achievements. Our AI builds a new resume for every job — no editing needed.</p>
+              <p className="text-gray-500">Highlight your most relevant skills and achievements. Our AI builds a new resume for every job — no editing needed.</p>
             </div>
             <div>
               <h3 className="font-bold text-lg text-gray-900 mb-1">Custom Answers</h3>
-              <p className="text-gray-600">Paste any job description and get instant, thoughtful responses for application questions — in your own voice.</p>
+              <p className="text-gray-500">Paste any job description and get instant, thoughtful responses for application questions — in your own voice.</p>
             </div>
             <div>
               <h3 className="font-bold text-lg text-gray-900 mb-1">Stay on Top of Your Job Hunt</h3>
-              <p className="text-gray-600">Keep track of where you've applied, what you sent, and what's next — all in one clean, organized dashboard.</p>
+              <p className="text-gray-500">Keep track of where you've applied, what you sent, and what's next — all in one clean, organized dashboard.</p>
             </div>
           </div>
         </div>
