@@ -155,14 +155,14 @@ export default function JobDetails() {
                     <Loader2 className="animate-spin h-4 w-4" />
                     <span>Generating answer...</span>
                   </motion.div>
-                ) : job.ai_answers && Array.isArray(job.ai_answers) && job.ai_answers[i] ? (
+                ) : Array.isArray(job.ai_answers) && job.ai_answers.length > 0 ? (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
                     className="text-foreground mt-2 pl-4 border-l-2 border-primary/50 prose prose-sm max-w-none"
                   >
-                    {job.ai_answers[i].split('\n').map((paragraph: string, index: number) => {
+                    {job.ai_answers.map((paragraph: string, index: number) => {
                       // Handle markdown-style bold text
                       const formattedParagraph = paragraph.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                       // Handle bullet points
@@ -177,6 +177,15 @@ export default function JobDetails() {
                         <p key={index} className="my-2 text-foreground" dangerouslySetInnerHTML={{ __html: formattedParagraph }} />
                       );
                     })}
+                  </motion.div>
+                ) : job.ai_answers === null ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="text-foreground mt-2 pl-4 border-l-2 border-primary/50 prose prose-sm max-w-none"
+                  >
+                    <p>No answers generated yet</p>
                   </motion.div>
                 ) : null}
               </AnimatePresence>

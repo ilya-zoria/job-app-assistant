@@ -97,7 +97,7 @@ export default function Waitlist() {
   return (
     <div className="flex flex-col md:flex-row min-h-screen h-screen bg-[#F0F1EC]">
       {/* Left Column */}
-      <div className="w-full max-w-xl flex flex-col justify-start md:justify-center px-10 md:px-12 py-6 md:py-10 h-screen md:h-auto mx-auto overflow-y-auto">
+      <div className="w-full max-w-xl flex flex-col justify-start md:justify-center px-10 md:px-12 py-6 md:py-10 min-h-screen md:h-auto mx-auto">
         <div>
           {/* Logo */}
           <div className="flex items-center mb-12">
@@ -152,7 +152,7 @@ export default function Waitlist() {
             </div>
             <div>
               <h3 className="font-bold text-lg text-gray-900 mb-1">Track Your Applications</h3>
-              <p className="text-gray-500">See what you’ve applied to, what’s pending, and what’s next, all in one place.</p>
+              <p className="text-gray-500">See what you've applied to, what's pending, and what's next, all in one place.</p>
             </div>
           </div>
         </div>
