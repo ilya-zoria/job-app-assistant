@@ -54,7 +54,8 @@ export default {
     			card: {
     				DEFAULT: 'hsl(var(--card))',
     				foreground: 'hsl(var(--card-foreground))'
-    			}
+    			},
+    			'background': '#F0F1EC',
     		},
     		keyframes: {
     			'accordion-down': {
