@@ -8,7 +8,7 @@ import Signup from "./pages/Signup";
 import Success from "./pages/Success";
 import { Toaster } from "./components/ui/sonner";
 import LandingPageLayout from './components/layout/LandingPageLayout';
-import ResumeUploader from './pages/ResumeUploader';
+import LandingPage from './pages/LandingPage';
 import ResumeBuilder from './pages/ResumeBuilder';
 import Download from './pages/Download';
 
@@ -20,7 +20,7 @@ function App() {
         <Route element={<LandingPageLayout />}>
           <Route path="/waitlist" element={<Waitlist />} />
           <Route path="/success" element={<Success />} />
-          <Route path="/" element={<ResumeUploader />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/download" element={<Download />} />
         </Route>
 

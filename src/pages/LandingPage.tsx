@@ -10,7 +10,7 @@ import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?worker&url';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
-const ResumeUploader = () => {
+const LandingPage = () => {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
@@ -24,21 +24,22 @@ const ResumeUploader = () => {
     setHasProcessed(false);
   }, []);
 
-  const pdfToImage = async (file: File): Promise<string> => {
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      const page = await pdf.getPage(1); // Only first page for now
+  const pdfToImages = async (file: File): Promise<string[]> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const numPages = pdf.numPages;
+    const images: string[] = [];
+    for (let i = 1; i <= numPages; i++) {
+      const page = await pdf.getPage(i);
       const viewport = page.getViewport({ scale: 2 });
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d');
       canvas.width = viewport.width;
       canvas.height = viewport.height;
       await page.render({ canvasContext: context, viewport }).promise;
-      return canvas.toDataURL('image/png');
-    } catch (err) {
-      throw new Error('Failed to render PDF to image.');
+      images.push(canvas.toDataURL('image/png'));
     }
+    return images;
   };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -49,22 +50,40 @@ const ResumeUploader = () => {
       setHasProcessed(true);
       const file = acceptedFiles[0];
       try {
-        let imageSource: string | File = file;
+        let ocrText = '';
         if (file.type === 'application/pdf') {
-          imageSource = await pdfToImage(file);
-        }
-        const { data: { text } } = await Tesseract.recognize(
-          imageSource,
-          'eng',
-          {
-            logger: (m: { status: string; progress: number }) => {
-              if (m.status === 'recognizing text') {
-                setProgress(Math.round(m.progress * 100));
+          const images = await pdfToImages(file);
+          let allText = '';
+          for (let i = 0; i < images.length; i++) {
+            const { data: { text } } = await Tesseract.recognize(
+              images[i],
+              'eng',
+              {
+                logger: (m: { status: string; progress: number }) => {
+                  if (m.status === 'recognizing text') {
+                    setProgress(Math.round(((i + m.progress) / images.length) * 100));
+                  }
+                },
               }
-            },
+            );
+            allText += text + '\n';
           }
-        );
-        navigate('/builder', { state: { ocrText: text } });
+          ocrText = allText;
+        } else {
+          const { data: { text } } = await Tesseract.recognize(
+            file,
+            'eng',
+            {
+              logger: (m: { status: string; progress: number }) => {
+                if (m.status === 'recognizing text') {
+                  setProgress(Math.round(m.progress * 100));
+                }
+              },
+            }
+          );
+          ocrText = text;
+        }
+        navigate('/builder', { state: { ocrText } });
       } catch (err) {
         setError('Failed to process file. Please upload a clear image or PDF.');
         console.error('OCR Error:', err);
@@ -90,7 +109,7 @@ const ResumeUploader = () => {
       
       <div
         {...getRootProps()}
-        className={`mx-auto max-w-lg border-2 border-dashed rounded-xl p-12 cursor-pointer
+        className={`mx-auto max-w-lg border-2 border-dashed rounded-xl p-12 cursor-pointer bg-white
           ${isDragActive ? 'border-primary bg-muted' : 'border-border'}`}
       >
         <input {...getInputProps()} />
@@ -116,4 +135,4 @@ const ResumeUploader = () => {
   );
 };
 
-export default ResumeUploader; 
+export default LandingPage; 

@@ -6,6 +6,13 @@ export interface ExperienceItem {
   description: string;
 }
 
+export interface EducationItem {
+  school: string;
+  degree: string;
+  dateRange: string;
+  description: string;
+}
+
 export interface ParsedResume {
   fullName: string;
   jobTitle: string;
@@ -15,15 +22,16 @@ export interface ParsedResume {
   linkedin: string;
   summary: string;
   experience: ExperienceItem[];
+  education: EducationItem[];
   skills: string[];
   tools: string[];
 }
 
 export function parseResumeText(text: string): ParsedResume {
-  // Simple regex/heuristics for demo purposes
-  const fullName = (text.match(/^(.*)\n/i) || [])[1] || '';
-  const jobTitle = (text.match(/\n([A-Za-z ]+Designer|Engineer|Manager|Developer|Lead|Director)\n/i) || [])[1] || '';
-  const location = (text.match(/([A-Za-z ]+, [A-Za-z ]+)/) || [])[1] || '';
+  // Improved regex/heuristics for demo purposes
+  const fullName = (text.match(/^(.*)\n/) || [])[1] || '';
+  const jobTitle = (text.match(/\n([A-Za-z ]+(Designer|Engineer|Manager|Developer|Lead|Director))\n/i) || [])[1] || '';
+  const location = (text.match(/([A-Za-z .'-]+, [A-Za-z .'-]+)/) || [])[1] || '';
   const email = (text.match(/[\w.-]+@[\w.-]+\.[A-Za-z]{2,}/) || [])[0] || '';
   const portfolio = (text.match(/\b(https?:\/\/)?[\w.-]+\.[a-z]{2,}\b/) || [])[0] || '';
   const linkedin = (text.match(/linkedin\.com\/[\w\/-]+/i) || [])[0] || '';
@@ -36,15 +44,33 @@ export function parseResumeText(text: string): ParsedResume {
   // Extract experience blocks
   const experience: ExperienceItem[] = [];
   const expSection = text.split(/WORK EXPERIENCE/i)[1]?.split(/SKILLS|TOOLS|EDUCATION/i)[0] || '';
-  const expBlocks = expSection.split(/\n(?=[A-Z][a-zA-Z]+ — )/g);
+  const expBlocks = expSection.split(/\n(?=[A-Z][a-zA-Z .'-]+ — )/g);
   expBlocks.forEach(block => {
-    const companyTitle = (block.match(/^([A-Za-z\s]+) — ([^\n]+)/) || []);
-    const dateRange = (block.match(/(\w+ \d{4} ?–? ?\w* ?\d{4}?)/) || [])[1] || '';
+    const companyTitle = (block.match(/^([A-Za-z .'-]+) — ([^\n]+)/) || []);
+    const dateRange = (block.match(/(\w+ \d{4} ?[–-]? ?\w* ?\d{4}?)/) || [])[1] || '';
     const description = block.replace(/^.*\n/, '').replace(dateRange, '').trim();
     if (companyTitle.length > 2) {
       experience.push({
         company: companyTitle[1].trim(),
         title: companyTitle[2].trim(),
+        dateRange,
+        description,
+      });
+    }
+  });
+
+  // Extract education blocks
+  const education: EducationItem[] = [];
+  const eduSection = text.split(/EDUCATION/i)[1]?.split(/SKILLS|TOOLS|EXPERIENCE|PROJECTS|CERTIFICATES|$|\n\n/)[0] || '';
+  const eduBlocks = eduSection.split(/\n(?=[A-Z][a-zA-Z .'-]+,? ?[A-Za-z .'-]* ?-? ?[A-Za-z .'-]*\n)/g);
+  eduBlocks.forEach(block => {
+    const schoolDegree = (block.match(/^([A-Za-z .'-]+)[,\- ]+([A-Za-z .'-]+)?/) || []);
+    const dateRange = (block.match(/(\w+ \d{4} ?[–-]? ?\w* ?\d{4}?)/) || [])[1] || '';
+    const description = block.replace(/^.*\n/, '').replace(dateRange, '').trim();
+    if (schoolDegree.length > 1) {
+      education.push({
+        school: schoolDegree[1]?.trim() || '',
+        degree: schoolDegree[2]?.trim() || '',
         dateRange,
         description,
       });
@@ -64,6 +90,7 @@ export function parseResumeText(text: string): ParsedResume {
     linkedin,
     summary,
     experience,
+    education,
     skills,
     tools,
   };

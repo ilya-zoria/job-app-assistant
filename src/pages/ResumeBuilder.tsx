@@ -15,6 +15,7 @@ const emptyResume: ParsedResume = {
   linkedin: '',
   summary: '',
   experience: [],
+  education: [],
   skills: [],
   tools: [],
 };
@@ -55,6 +56,29 @@ const ResumeBuilder = () => {
     setResume(prev => ({
       ...prev,
       experience: prev.experience.filter((_, i) => i !== idx),
+    }));
+  };
+
+  // Education handlers
+  const handleEducationChange = (idx: number, field: keyof ParsedResume['education'][0], value: string) => {
+    setResume(prev => ({
+      ...prev,
+      education: prev.education.map((edu, i) => i === idx ? { ...edu, [field]: value } : edu),
+    }));
+  };
+  const handleAddEducation = () => {
+    setResume(prev => ({
+      ...prev,
+      education: [
+        ...prev.education,
+        { school: '', degree: '', dateRange: '', description: '' },
+      ],
+    }));
+  };
+  const handleRemoveEducation = (idx: number) => {
+    setResume(prev => ({
+      ...prev,
+      education: prev.education.filter((_, i) => i !== idx),
     }));
   };
 
@@ -114,6 +138,21 @@ const ResumeBuilder = () => {
           <Button variant="outline" onClick={handleAddExperience} className="mt-2">Add experience</Button>
         </div>
         <div className="mb-4">
+          <label className="block text-sm mb-1">Education</label>
+          {resume.education.map((edu, idx) => (
+            <div key={idx} className="mb-3 p-3 rounded-md border border-border">
+              <div className="flex gap-2 mb-2">
+                <Input className="flex-1" placeholder="School" value={edu.school} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEducationChange(idx, 'school', e.target.value)} />
+                <Input className="flex-1" placeholder="Degree" value={edu.degree} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEducationChange(idx, 'degree', e.target.value)} />
+                <Input className="w-40" placeholder="Date range" value={edu.dateRange} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEducationChange(idx, 'dateRange', e.target.value)} />
+                <Button variant="ghost" onClick={() => handleRemoveEducation(idx)}>-</Button>
+              </div>
+              <Textarea placeholder="Description" value={edu.description} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleEducationChange(idx, 'description', e.target.value)} rows={2} />
+            </div>
+          ))}
+          <Button variant="outline" onClick={handleAddEducation} className="mt-2">Add education</Button>
+        </div>
+        <div className="mb-4">
           <label className="block text-sm mb-1">Skills</label>
           <Input value={resume.skills.join(', ')} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleListChange('skills', e.target.value)} placeholder="Comma separated" />
         </div>
@@ -135,30 +174,57 @@ const ResumeBuilder = () => {
           </div>
         </div>
         <div className="border-t border-border my-4" />
-        <div className="mb-4">
-          <div className="font-bold mb-1">SUMMARY</div>
-          <div className="text-sm whitespace-pre-line">{resume.summary}</div>
-        </div>
-        <div className="mb-4">
-          <div className="font-bold mb-1">WORK EXPERIENCE</div>
-          {resume.experience.map((exp, idx) => (
-            <div key={idx} className="mb-2">
-              <div className="font-semibold">
-                {exp.company} — {exp.title}
-                {exp.dateRange && <span className="ml-2 text-xs text-muted-foreground">{exp.dateRange}</span>}
+        {/* Summary section, only if summary exists */}
+        {resume.summary && (
+          <div className="mb-4">
+            <div className="font-bold mb-1">SUMMARY</div>
+            <div className="text-sm whitespace-pre-line">{resume.summary}</div>
+          </div>
+        )}
+        {/* Work Experience section, only if experience exists */}
+        {resume.experience.length > 0 && (
+          <div className="mb-4">
+            <div className="font-bold mb-1">WORK EXPERIENCE</div>
+            {resume.experience.map((exp, idx) => (
+              <div key={idx} className="mb-2">
+                <div className="font-semibold">
+                  {exp.company} — {exp.title}
+                  {exp.dateRange && <span className="ml-2 text-xs text-muted-foreground">{exp.dateRange}</span>}
+                </div>
+                <div className="text-sm whitespace-pre-line">{exp.description}</div>
               </div>
-              <div className="text-sm whitespace-pre-line">{exp.description}</div>
-            </div>
-          ))}
-        </div>
-        <div className="mb-4">
-          <div className="font-bold mb-1">SKILLS</div>
-          <div className="text-sm">{resume.skills.join(', ')}</div>
-        </div>
-        <div className="mb-4">
-          <div className="font-bold mb-1">TOOLS</div>
-          <div className="text-sm">{resume.tools.join(', ')}</div>
-        </div>
+            ))}
+          </div>
+        )}
+        {/* Education section, only if education exists */}
+        {resume.education.length > 0 && (
+          <div className="mb-4">
+            <div className="font-bold mb-1">EDUCATION</div>
+            {resume.education.map((edu, idx) => (
+              <div key={idx} className="mb-2">
+                <div className="font-semibold">
+                  {edu.school} — {edu.degree}
+                  {edu.dateRange && <span className="ml-2 text-xs text-muted-foreground">{edu.dateRange}</span>}
+                </div>
+                <div className="text-sm whitespace-pre-line">{edu.description}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        {/* Skills section, only if skills exist */}
+        {resume.skills.length > 0 && (
+          <div className="mb-4">
+            <div className="font-bold mb-1">SKILLS</div>
+            <div className="text-sm">{resume.skills.join(', ')}</div>
+          </div>
+        )}
+        {/* Tools section, only if tools exist */}
+        {resume.tools.length > 0 && (
+          <div className="mb-4">
+            <div className="font-bold mb-1">TOOLS</div>
+            <div className="text-sm">{resume.tools.join(', ')}</div>
+          </div>
+        )}
       </div>
     </div>
   );
