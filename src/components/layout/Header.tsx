@@ -1,41 +1,40 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import logo from '/assets/logo.svg';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  variant?: 'default' | 'resume-builder';
+}
+
+const Header: React.FC<HeaderProps> = ({ variant = 'default' }) => {
   return (
-    <header className="w-full py-4 px-4 md:px-8 bg-background border-b border-border">
+    <header className="w-full py-4 px-4 md:px-8 bg-background border-b border-border mb-8">
       <div className="container mx-auto flex items-center justify-between">
-        {/* Left Section: Nav Links */}
-        <nav className="flex items-center space-x-6">
-          <Link to="/company" className="text-foreground hover:text-primary transition-colors text-lg font-medium">
-            Company
-          </Link>
-          <Link to="/pricing" className="text-foreground hover:text-primary transition-colors text-lg font-medium">
-            Pricing
-          </Link>
-        </nav>
-
-        {/* Center Section: Logo */}
-        <div className="absolute left-1/2 -translate-x-1/2">
-          <Link to="/" className="text-2xl font-bold text-foreground">
-            Talentium
+        <div className="flex items-center gap-2">
+          <Link to="/">
+            <img src={logo} className="h-10" />
           </Link>
         </div>
-
-        {/* Right Section: Buttons */}
-        <div className="flex items-center space-x-4">
-          <Button variant="ghost" asChild>
-            <Link to="/login" className="text-foreground hover:text-primary transition-colors text-lg font-medium">
-              Login
-            </Link>
-          </Button>
-          <Button asChild className="bg-secondary hover:bg-secondary/90 text-white px-6 py-2 rounded-lg text-lg font-medium">
-            <Link to="/book-a-demo">
-              Book a demo
-            </Link>
-          </Button>
-        </div>
+        {variant === 'resume-builder' ? (
+          <div className="flex gap-2">
+            <Button variant="outline">Tailor for job</Button>
+            <Button>Download</Button>
+          </div>
+        ) : (
+          <div className="flex items-center space-x-4">
+            <Button variant="ghost" asChild>
+              <Link to="/login" className="text-foreground hover:text-primary transition-colors font-medium">
+                Login
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link to="/signup">
+                Sign up
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
     </header>
   );
