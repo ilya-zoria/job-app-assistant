@@ -10,7 +10,7 @@ export default function DefaultLayout() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="max-w-[1400px] w-full mx-auto">
       <Header variant={headerVariant} />
       <main className="container mx-auto px-4 flex items-center justify-center flex-grow">
         <Outlet />

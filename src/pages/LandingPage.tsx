@@ -25,8 +25,8 @@ const LandingPage = () => {
   }, []);
 
   const pdfToImages = async (file: File): Promise<string[]> => {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const numPages = pdf.numPages;
     const images: string[] = [];
     for (let i = 1; i <= numPages; i++) {
@@ -70,17 +70,17 @@ const LandingPage = () => {
           }
           ocrText = allText;
         } else {
-          const { data: { text } } = await Tesseract.recognize(
+        const { data: { text } } = await Tesseract.recognize(
             file,
-            'eng',
-            {
-              logger: (m: { status: string; progress: number }) => {
-                if (m.status === 'recognizing text') {
-                  setProgress(Math.round(m.progress * 100));
-                }
-              },
-            }
-          );
+          'eng',
+          {
+            logger: (m: { status: string; progress: number }) => {
+              if (m.status === 'recognizing text') {
+                setProgress(Math.round(m.progress * 100));
+              }
+            },
+          }
+        );
           ocrText = text;
         }
         navigate('/builder', { state: { ocrText } });

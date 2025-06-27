@@ -2,14 +2,14 @@
 export interface ExperienceItem {
   company: string;
   title: string;
-  dateRange: string;
+  period: string;
   description: string;
 }
 
 export interface EducationItem {
   school: string;
   degree: string;
-  dateRange: string;
+  period: string;
   description: string;
 }
 
@@ -23,8 +23,9 @@ export interface ParsedResume {
   summary: string;
   experience: ExperienceItem[];
   education: EducationItem[];
-  skills: string[];
-  tools: string[];
+  skills: string;
+  tools: string;
+  languages: string;
 }
 
 export function parseResumeText(text: string): ParsedResume {
@@ -47,13 +48,13 @@ export function parseResumeText(text: string): ParsedResume {
   const expBlocks = expSection.split(/\n(?=[A-Z][a-zA-Z .'-]+ — )/g);
   expBlocks.forEach(block => {
     const companyTitle = (block.match(/^([A-Za-z .'-]+) — ([^\n]+)/) || []);
-    const dateRange = (block.match(/(\w+ \d{4} ?[–-]? ?\w* ?\d{4}?)/) || [])[1] || '';
-    const description = block.replace(/^.*\n/, '').replace(dateRange, '').trim();
+    const period = (block.match(/(\w+ \d{4} ?[–-]? ?\w* ?\d{4}?)/) || [])[1] || '';
+    const description = block.replace(/^.*\n/, '').replace(period, '').trim();
     if (companyTitle.length > 2) {
       experience.push({
         company: companyTitle[1].trim(),
         title: companyTitle[2].trim(),
-        dateRange,
+        period,
         description,
       });
     }
@@ -65,13 +66,13 @@ export function parseResumeText(text: string): ParsedResume {
   const eduBlocks = eduSection.split(/\n(?=[A-Z][a-zA-Z .'-]+,? ?[A-Za-z .'-]* ?-? ?[A-Za-z .'-]*\n)/g);
   eduBlocks.forEach(block => {
     const schoolDegree = (block.match(/^([A-Za-z .'-]+)[,\- ]+([A-Za-z .'-]+)?/) || []);
-    const dateRange = (block.match(/(\w+ \d{4} ?[–-]? ?\w* ?\d{4}?)/) || [])[1] || '';
-    const description = block.replace(/^.*\n/, '').replace(dateRange, '').trim();
+    const period = (block.match(/(\w+ \d{4} ?[–-]? ?\w* ?\d{4}?)/) || [])[1] || '';
+    const description = block.replace(/^.*\n/, '').replace(period, '').trim();
     if (schoolDegree.length > 1) {
       education.push({
         school: schoolDegree[1]?.trim() || '',
         degree: schoolDegree[2]?.trim() || '',
-        dateRange,
+        period,
         description,
       });
     }
@@ -91,7 +92,8 @@ export function parseResumeText(text: string): ParsedResume {
     summary,
     experience,
     education,
-    skills,
-    tools,
+    skills: skills.join(', '),
+    tools: tools.join(', '),
+    languages: '',
   };
 } 
