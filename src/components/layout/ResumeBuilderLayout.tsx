@@ -1,15 +1,9 @@
-import React from 'react';
+import { Outlet } from 'react-router-dom';
 
-interface ResumeBuilderLayoutProps {
-  children: React.ReactNode;
-}
-
-const ResumeBuilderLayout: React.FC<ResumeBuilderLayoutProps> = ({ children }) => {
-  return (
-    <div className="w-screen min-h-screen">
-      {children}
-    </div>
-  );
-};
+const ResumeBuilderLayout = () => (
+  <div className="max-w-[1600px] mx-auto">
+    <Outlet />
+  </div>
+);
 
 export default ResumeBuilderLayout; 

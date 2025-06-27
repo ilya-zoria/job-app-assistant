@@ -5,9 +5,10 @@ import type { ParsedResume, ExperienceItem } from '../lib/parseResumeText';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import ResumeBuilderLayout from '@/components/layout/ResumeBuilderLayout';
+// @ts-ignore
 import html2pdf from 'html2pdf.js';
 import Header from '@/components/layout/Header';
+import SectionHeading from '@/components/SectionHeading';
 
 const emptyResume: ParsedResume = {
   fullName: '',
@@ -36,6 +37,7 @@ const ResumeBuilder = () => {
   const measureContainerRef = useRef<HTMLDivElement>(null);
   const blockRefs = useRef<(HTMLDivElement | null)[]>([]);
   const previewRef = useRef<HTMLDivElement>(null);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
 
   function getResumeBlocks(resume: ParsedResume) {
     const blocks: { type: string, key: string, jsx: JSX.Element }[] = [];
@@ -61,7 +63,7 @@ const ResumeBuilder = () => {
       blocks.push({
         type: 'section-heading',
         key: 'summary-section',
-        jsx: <div className="font-bold uppercase text-sm border-b pb-1 mb-2 tracking-wider">Summary</div>
+        jsx: <SectionHeading>Summary</SectionHeading>
       });
       resume.summary.split(/\n+/).forEach((line, i) => {
         blocks.push({
@@ -76,7 +78,7 @@ const ResumeBuilder = () => {
       blocks.push({
         type: 'section-heading',
         key: 'workexp-heading',
-        jsx: <div className="font-bold uppercase text-sm border-b pb-1 mb-2 tracking-wider">Work Experience</div>
+        jsx: <SectionHeading>Work Experience</SectionHeading>
       });
       resume.experience.forEach((exp, idx) => {
         blocks.push({
@@ -107,7 +109,7 @@ const ResumeBuilder = () => {
       blocks.push({
         type: 'section-heading',
         key: 'edu-heading',
-        jsx: <div className="font-bold uppercase text-sm border-b pb-1 mb-2 tracking-wider">Education</div>
+        jsx: <SectionHeading>Education</SectionHeading>
       });
       resume.education.forEach((edu, idx) => {
         blocks.push({
@@ -138,7 +140,7 @@ const ResumeBuilder = () => {
       blocks.push({
         type: 'section-heading',
         key: 'skills-section',
-        jsx: <div className="font-bold uppercase text-sm border-b pb-1 mb-2 tracking-wider">Skills</div>
+        jsx: <SectionHeading>Skills</SectionHeading>
       });
       blocks.push({
         type: 'paragraph',
@@ -151,7 +153,7 @@ const ResumeBuilder = () => {
       blocks.push({
         type: 'section-heading',
         key: 'tools-section',
-        jsx: <div className="font-bold uppercase text-sm border-b pb-1 mb-2 tracking-wider">Tools</div>
+        jsx: <SectionHeading>Tools</SectionHeading>
       });
       blocks.push({
         type: 'paragraph',
@@ -326,24 +328,29 @@ const ResumeBuilder = () => {
     setResume(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (previewRef.current) {
-      html2pdf()
+      setIsExportingPDF(true);
+      // Wait for DOM to update
+      await new Promise(resolve => setTimeout(resolve, 50));
+      await html2pdf()
         .set({
           margin: 0,
           filename: 'resume.pdf',
           html2canvas: { scale: 2 },
-          jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
+          jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
+          pagebreak: { mode: ['css', 'legacy'] }
         })
         .from(previewRef.current)
         .save();
+      setIsExportingPDF(false);
     }
   };
 
   return (
-    <ResumeBuilderLayout>
+    <>
       <Header variant="resume-builder" onDownload={handleDownloadPDF} />
-      <div className="h-auto flex flex-col md:flex-row gap-8 overflow-x-hidden">
+      <div className="h-auto flex flex-col md:flex-row gap-8 overflow-x-hidden px-4 md:px-8">
         {/* Left: Editable fields */}
         <div className="flex-1 bg-white rounded-xl p-8 min-w-[350px] h-full max-h-screen overflow-y-auto mb-8">
           <div className="flex flex-col gap-4">
@@ -452,7 +459,10 @@ const ResumeBuilder = () => {
         </div>
         {/* Right: Resume preview */}
         <div className="flex flex-col items-center flex-1 w-full h-full">
-          <div ref={previewRef} className="bg-white rounded-xl border border-border w-[816px] h-[1056px] mx-auto mb-8 p-10 overflow-y-auto overflow-x-hidden max-w-full">
+          <div
+            ref={previewRef}
+            className={`bg-white rounded-xl border border-border w-[816px] mx-auto mb-8 p-10 overflow-y-auto max-w-full${!isExportingPDF ? ' h-[1056px]' : ''}`}
+          >
             <div className="flex flex-col gap-8">
               {/* Header */}
               <div className="text-center">
@@ -468,14 +478,14 @@ const ResumeBuilder = () => {
               {/* SUMMARY */}
               {resume.summary && (
                 <div>
-                  <div className="font-bold uppercase text-sm border-b border-black/20 pb-1 mb-2 tracking-wider">Summary</div>
+                  <SectionHeading>Summary</SectionHeading>
                   <div className="text-sm whitespace-pre-line break-words">{resume.summary}</div>
                 </div>
               )}
               {/* WORK EXPERIENCE */}
               {resume.experience.length > 0 && (
                 <div>
-                  <div className="font-bold uppercase text-sm border-b border-black/20 pb-1 mb-2 tracking-wider">Work Experience</div>
+                  <SectionHeading>Work Experience</SectionHeading>
                   {resume.experience.map((exp, idx) => (
                     <div key={idx} className="mb-2 last:mb-0">
                       <div className="font-bold text-sm break-words">{exp.company} — {exp.title}</div>
@@ -494,7 +504,7 @@ const ResumeBuilder = () => {
               {/* EDUCATION */}
               {resume.education.length > 0 && (
                 <div>
-                  <div className="font-bold uppercase text-sm border-b border-black/20 pb-1 mb-2 tracking-wider">Education</div>
+                  <SectionHeading>Education</SectionHeading>
                   {resume.education.map((edu, idx) => (
                     <div key={idx} className="mb-2 last:mb-0">
                       <div className="font-bold text-sm break-words">{edu.school} — {edu.degree}</div>
@@ -509,21 +519,21 @@ const ResumeBuilder = () => {
               {/* SKILLS */}
               {resume.skills && (
                 <div>
-                  <div className="font-bold uppercase text-sm border-b border-black/20 pb-1 mb-2 tracking-wider">Skills</div>
+                  <SectionHeading>Skills</SectionHeading>
                   <div className="text-sm break-words">{resume.skills}</div>
                 </div>
               )}
               {/* TOOLS */}
               {resume.tools && (
                 <div>
-                  <div className="font-bold uppercase text-sm border-b border-black/20 pb-1 mb-2 tracking-wider">Tools</div>
+                  <SectionHeading>Tools</SectionHeading>
                   <div className="text-sm break-words">{resume.tools}</div>
                 </div>
               )}
               {/* LANGUAGES */}
               {resume.languages && (
                 <div>
-                  <div className="font-bold uppercase text-sm border-b border-black/20 pb-1 mb-2 tracking-wider">Languages</div>
+                  <SectionHeading>Languages</SectionHeading>
                   <div className="text-sm break-words">{resume.languages}</div>
                 </div>
               )}
@@ -531,7 +541,7 @@ const ResumeBuilder = () => {
           </div>
         </div>
       </div>
-    </ResumeBuilderLayout>
+    </>
   );
 };
 

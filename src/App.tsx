@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import DefaultLayout from './components/layout/DefaultLayout';
+import ResumeBuilderLayout from './components/layout/ResumeBuilderLayout';
 import AuthLayout from './components/layout/AuthLayout';
 import Waitlist from './pages/Waitlist';
 import Home from "./pages/Home";
@@ -33,9 +34,14 @@ function App() {
         {/* Dashboard and related routes use DefaultLayout (with header) */}
         <Route element={<DefaultLayout />}>
           <Route path="/home" element={<Home />} />
+        </Route>
+
+        <Route element={<ResumeBuilderLayout />}>
           <Route path="/builder" element={<ResumeBuilder />} />
         </Route>
-      </Routes>
+        
+      </Routes> 
+
       <Toaster />
     </Router>
   );

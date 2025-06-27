@@ -10,8 +10,8 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ variant = 'default', onDownload }) => {
   return (
-    <header className="w-full py-4 px-4 md:px-8 bg-background border-b border-border mb-8">
-      <div className="container mx-auto flex items-center justify-between">
+    <header className="w-full py-8 px-4 md:px-8">
+      <div className="mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Link to="/">
             <img src={logo} className="h-10" />
