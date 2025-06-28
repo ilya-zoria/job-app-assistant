@@ -21,9 +21,8 @@ const SectionHeading: React.FC<SectionHeadingProps> = ({
   }
   // Preview style: title left, border to the right
   return (
-    <div className={`flex items-center mb-4 ${className}`}>
-      <span className="font-bold text-lg text-primary mr-4 whitespace-nowrap">{children}</span>
-      <div className="flex-1 border-t border-gray-300 opacity-60" />
+    <div className={`font-bold uppercase text-sm border-b border-gray-300 pb-1 mb-2 tracking-wider text-left ${className}`}>
+      {children}
     </div>
   );
 };

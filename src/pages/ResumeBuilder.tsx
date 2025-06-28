@@ -63,7 +63,7 @@ const ResumeBuilder = () => {
       blocks.push({
         type: 'section-heading',
         key: 'summary-section',
-        jsx: <SectionHeading>Summary</SectionHeading>
+        jsx: <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Summary</SectionHeading>
       });
       resume.summary.split(/\n+/).forEach((line, i) => {
         blocks.push({
@@ -78,7 +78,7 @@ const ResumeBuilder = () => {
       blocks.push({
         type: 'section-heading',
         key: 'workexp-heading',
-        jsx: <SectionHeading>Work Experience</SectionHeading>
+        jsx: <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Work Experience</SectionHeading>
       });
       resume.experience.forEach((exp, idx) => {
         blocks.push({
@@ -109,7 +109,7 @@ const ResumeBuilder = () => {
       blocks.push({
         type: 'section-heading',
         key: 'edu-heading',
-        jsx: <SectionHeading>Education</SectionHeading>
+        jsx: <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Education</SectionHeading>
       });
       resume.education.forEach((edu, idx) => {
         blocks.push({
@@ -140,7 +140,7 @@ const ResumeBuilder = () => {
       blocks.push({
         type: 'section-heading',
         key: 'skills-section',
-        jsx: <SectionHeading>Skills</SectionHeading>
+        jsx: <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Skills</SectionHeading>
       });
       blocks.push({
         type: 'paragraph',
@@ -153,7 +153,7 @@ const ResumeBuilder = () => {
       blocks.push({
         type: 'section-heading',
         key: 'tools-section',
-        jsx: <SectionHeading>Tools</SectionHeading>
+        jsx: <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Tools</SectionHeading>
       });
       blocks.push({
         type: 'paragraph',
@@ -478,14 +478,14 @@ const ResumeBuilder = () => {
               {/* SUMMARY */}
               {resume.summary && (
                 <div>
-                  <SectionHeading>Summary</SectionHeading>
+                  <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Summary</SectionHeading>
                   <div className="text-sm whitespace-pre-line break-words">{resume.summary}</div>
                 </div>
               )}
               {/* WORK EXPERIENCE */}
               {resume.experience.length > 0 && (
                 <div>
-                  <SectionHeading>Work Experience</SectionHeading>
+                  <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Work Experience</SectionHeading>
                   {resume.experience.map((exp, idx) => (
                     <div key={idx} className="mb-2 last:mb-0">
                       <div className="font-bold text-sm break-words">{exp.company} — {exp.title}</div>
@@ -504,7 +504,7 @@ const ResumeBuilder = () => {
               {/* EDUCATION */}
               {resume.education.length > 0 && (
                 <div>
-                  <SectionHeading>Education</SectionHeading>
+                  <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Education</SectionHeading>
                   {resume.education.map((edu, idx) => (
                     <div key={idx} className="mb-2 last:mb-0">
                       <div className="font-bold text-sm break-words">{edu.school} — {edu.degree}</div>
@@ -519,21 +519,21 @@ const ResumeBuilder = () => {
               {/* SKILLS */}
               {resume.skills && (
                 <div>
-                  <SectionHeading>Skills</SectionHeading>
+                  <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Skills</SectionHeading>
                   <div className="text-sm break-words">{resume.skills}</div>
                 </div>
               )}
               {/* TOOLS */}
               {resume.tools && (
                 <div>
-                  <SectionHeading>Tools</SectionHeading>
+                  <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Tools</SectionHeading>
                   <div className="text-sm break-words">{resume.tools}</div>
                 </div>
               )}
               {/* LANGUAGES */}
               {resume.languages && (
                 <div>
-                  <SectionHeading>Languages</SectionHeading>
+                  <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Languages</SectionHeading>
                   <div className="text-sm break-words">{resume.languages}</div>
                 </div>
               )}
