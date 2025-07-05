@@ -55,6 +55,9 @@ const Header: React.FC<HeaderProps> = ({ variant = 'default', onDownload }) => {
           </div>
           <div className="flex gap-2 items-center">
             <Button variant="outline">Upgrade</Button>
+            {variant === 'resume-builder' && onDownload && (
+              <Button variant="default" onClick={onDownload}>Download</Button>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button>{userName}</Button>

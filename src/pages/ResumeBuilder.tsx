@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef, useLayoutEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useEffect, useState, useRef, useLayoutEffect, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { parseResumeText } from '../lib/parseResumeText';
 import type { ParsedResume, ExperienceItem } from '../lib/parseResumeText';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import html2pdf from 'html2pdf.js';
 import Header from '@/components/layout/Header';
 import SectionHeading from '@/components/SectionHeading';
+import { supabase } from '../lib/supabaseClient';
 
 const emptyResume: ParsedResume = {
   fullName: '',
@@ -27,6 +28,7 @@ const emptyResume: ParsedResume = {
 
 const ResumeBuilder = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const ocrText = location.state?.ocrText || '';
   const [resume, setResume] = useState<ParsedResume>(emptyResume);
 
@@ -38,6 +40,7 @@ const ResumeBuilder = () => {
   const blockRefs = useRef<(HTMLDivElement | null)[]>([]);
   const previewRef = useRef<HTMLDivElement>(null);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [measuringBlocks, setMeasuringBlocks] = useState<JSX.Element[]>([]);
 
   function getResumeBlocks(resume: ParsedResume) {
     const blocks: { type: string, key: string, jsx: JSX.Element }[] = [];
@@ -165,13 +168,12 @@ const ResumeBuilder = () => {
   }
 
   // Step 1: After resume changes, flatten to blocks and reset refs
-  const blocks = getResumeBlocks(resume);
+  const blocks = useMemo(() => getResumeBlocks(resume), [resume, isExportingPDF]);
   blockRefs.current = blocks.map(() => null);
 
   // Step 2: After blocks render, measure their heights (grouping <li> into <ul> as in render)
   useLayoutEffect(() => {
     if (!measuring) return;
-    if (!measureContainerRef.current) return;
     // Group consecutive <li> blocks into <ul> for measuring
     const groupedBlocks: { jsx: JSX.Element, isList: boolean, count: number }[] = [];
     let bulletBuffer: JSX.Element[] = [];
@@ -191,23 +193,21 @@ const ResumeBuilder = () => {
     }
     // Render each group in the measuring container and measure its height
     const tempRefs: (HTMLDivElement | null)[] = [];
+    setMeasuringBlocks(
+      groupedBlocks.map((group, i) => (
+        <div key={i} ref={el => (tempRefs[i] = el)}>
+          {group.jsx}
+        </div>
+      ))
+    );
     setTimeout(() => {
       const heights = tempRefs.map(ref => ref?.offsetHeight || 0);
       setBlockHeights(heights);
       setMeasuring(false);
     }, 0);
-    // Render for measuring
-    if (measureContainerRef.current) {
-      measureContainerRef.current.innerHTML = '';
-      groupedBlocks.forEach((group, i) => {
-        const div = document.createElement('div');
-        measureContainerRef.current!.appendChild(div);
-        tempRefs[i] = div;
-      });
-    }
     // Save groupedBlocks for splitting
     (window as any).__groupedBlocks = groupedBlocks;
-  }, [measuring]);
+  }, [measuring, blocks]);
 
   // Step 3: When blockHeights are available and not measuring, split into pages (splitting <ul> if needed)
   useEffect(() => {
@@ -269,8 +269,20 @@ const ResumeBuilder = () => {
   useEffect(() => {
     if (ocrText) {
       setResume(parseResumeText(ocrText));
+      setTimeout(() => setMeasuring(true), 100);
+    } else {
+      const saved = localStorage.getItem('resumeData');
+      if (saved) {
+        setResume(JSON.parse(saved));
+        localStorage.removeItem('resumeData');
+        setTimeout(() => setMeasuring(true), 100);
+      }
     }
   }, [ocrText]);
+
+  useEffect(() => {
+    console.log('blockHeights', blockHeights);
+  }, [blockHeights]);
 
   // Handlers for updating fields
   const handleChange = (field: keyof ParsedResume, value: string) => {
@@ -347,9 +359,39 @@ const ResumeBuilder = () => {
     }
   };
 
+  // Download handler with auth check
+  const handleDownload = async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData?.user) {
+      // Not logged in: save resume and redirect to signup
+      localStorage.setItem('resumeData', JSON.stringify(resume));
+      navigate('/signup?redirect=/builder');
+      return;
+    }
+    // Logged in: proceed with download
+    handleDownloadPDF();
+  };
+
+  // Debug: log resume and pages after each render
+  useEffect(() => {
+    console.log('resume', resume);
+    console.log('pages', pages);
+  });
+
+  // Add hidden measuring container for block height measurement
+  const measuringContainer = (
+    <div
+      ref={measureContainerRef}
+      style={{ visibility: 'hidden', position: 'absolute', left: -9999, top: 0, width: '800px', pointerEvents: 'none' }}
+    >
+      {measuringBlocks}
+    </div>
+  );
+
   return (
     <>
-      <Header variant="resume-builder" onDownload={handleDownloadPDF} />
+      {measuringContainer}
+      <Header variant="resume-builder" onDownload={handleDownload} />
       <div className="h-auto flex flex-col md:flex-row gap-8 overflow-x-hidden px-4 md:px-8">
         {/* Left: Editable fields */}
         <div className="flex-1 bg-white rounded-xl p-8 min-w-[350px] h-full max-h-screen overflow-y-auto mb-8">
@@ -463,81 +505,15 @@ const ResumeBuilder = () => {
             ref={previewRef}
             className={`bg-white rounded-xl border border-border w-[816px] mx-auto mb-8 p-10 overflow-y-auto max-w-full${!isExportingPDF ? ' h-[1056px]' : ''}`}
           >
-            <div className="flex flex-col gap-8">
-              {/* Header */}
-              <div className="text-center">
-                <div className="text-3xl font-serif font-bold leading-tight">{resume.fullName || 'Full Name'}</div>
-                <div className="text-md font-semibold mt-2 mb-2">{resume.jobTitle || 'Job Title'}</div>
-                <div className="text-sm text-gray-700 mt-2">
-                  {resume.location && <span>{resume.location} | </span>}
-                  {resume.email && <span>{resume.email} | </span>}
-                  {resume.portfolio && <span>{resume.portfolio} | </span>}
-                  {resume.linkedin && <span>{resume.linkedin}</span>}
-                </div>
+            {pages.map((page, index) => (
+              <div key={index} className="mb-8">
+                {page.map((block, blockIndex) => (
+                  <div key={`${index}-${blockIndex}`} className="mb-4">
+                    {block}
+                  </div>
+                ))}
               </div>
-              {/* SUMMARY */}
-              {resume.summary && (
-                <div>
-                  <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Summary</SectionHeading>
-                  <div className="text-sm whitespace-pre-line break-words">{resume.summary}</div>
-                </div>
-              )}
-              {/* WORK EXPERIENCE */}
-              {resume.experience.length > 0 && (
-                <div>
-                  <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Work Experience</SectionHeading>
-                  {resume.experience.map((exp, idx) => (
-                    <div key={idx} className="mb-2 last:mb-0">
-                      <div className="font-bold text-sm break-words">{exp.company} — {exp.title}</div>
-                      {exp.period && <div className="italic text-sm mb-1 break-words">{exp.period}</div>}
-                      {exp.description && (
-                        <ul className="list-disc list-outside pl-6 text-sm break-words">
-                          {exp.description.split(/\n|•/).filter(Boolean).map((line, i) => (
-                            <li key={i} className="break-words">{line.trim()}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {/* EDUCATION */}
-              {resume.education.length > 0 && (
-                <div>
-                  <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Education</SectionHeading>
-                  {resume.education.map((edu, idx) => (
-                    <div key={idx} className="mb-2 last:mb-0">
-                      <div className="font-bold text-sm break-words">{edu.school} — {edu.degree}</div>
-                      {edu.period && <div className="italic text-sm mb-1 break-words">{edu.period}</div>}
-                      {edu.description && (
-                        <div className="text-sm whitespace-pre-line break-words">{edu.description}</div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {/* SKILLS */}
-              {resume.skills && (
-                <div>
-                  <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Skills</SectionHeading>
-                  <div className="text-sm break-words">{resume.skills}</div>
-                </div>
-              )}
-              {/* TOOLS */}
-              {resume.tools && (
-                <div>
-                  <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Tools</SectionHeading>
-                  <div className="text-sm break-words">{resume.tools}</div>
-                </div>
-              )}
-              {/* LANGUAGES */}
-              {resume.languages && (
-                <div>
-                  <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Languages</SectionHeading>
-                  <div className="text-sm break-words">{resume.languages}</div>
-                </div>
-              )}
-            </div>
+            ))}
           </div>
         </div>
       </div>
@@ -545,4 +521,4 @@ const ResumeBuilder = () => {
   );
 };
 
-export default ResumeBuilder; 
+export default ResumeBuilder;
