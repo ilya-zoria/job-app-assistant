@@ -2,8 +2,8 @@ import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Tesseract from 'tesseract.js';
 import { useNavigate } from 'react-router-dom';
-import { UploadCloud } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import VariableProximity from '@/components/VariableProximity';
 // @ts-ignore
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?worker&url';
@@ -16,6 +16,7 @@ const LandingPage = () => {
   const [error, setError] = useState('');
   const [hasProcessed, setHasProcessed] = useState(false); // Prevents auto-processing
   const navigate = useNavigate();
+  const containerRef = React.useRef(null);
 
   useEffect(() => {
     setLoading(false);
@@ -103,9 +104,24 @@ const LandingPage = () => {
   });
 
   return (
-    <div className="container mx-auto text-center py-24">
-      <h1 className="text-5xl font-serif mb-4">Apply smarter with<br/>AI-tailored resumes</h1>
-      <p className="text-muted-foreground mb-12">Upload your resume, job description and get tailored resume</p>
+    <div className="mx-auto text-center py-24 max-w-3xl">
+      {/* <h1 className="text-5xl font-serif mb-4">Apply smarter with<br/>AI-tailored resumes</h1> */}
+      <div
+        ref={containerRef}
+        style={{position: 'relative'}}
+        >
+        <VariableProximity
+          label={'Apply smarter with AI-tailored resumes'}
+          className="text-5xl md:text-7xl italic leading-tight text-gray-900"
+          fromFontVariationSettings="'wght' 400, 'opsz' 9"
+          toFontVariationSettings="'wght' 900, 'opsz' 40"
+          containerRef={containerRef}
+          radius={100}
+          falloff="exponential"
+          style={{ fontFamily: "'Savate', sans-serif" }}
+        />
+      </div>
+      <p className="text-muted-foreground text-xl mb-12 mt-6">Upload your resume, job description and get tailored resume</p>
       
       <div
         {...getRootProps()}
@@ -114,7 +130,7 @@ const LandingPage = () => {
       >
         <input {...getInputProps()} />
         <div className="flex flex-col items-center justify-center space-y-4">
-          <UploadCloud className="w-16 h-16 text-muted-foreground" />
+          <img src="/assets/icon-upload_resume.png" alt="Upload resume" className="w-48 h-48 text-muted-foreground" />
           <p className="font-semibold">Drag & drop resume here</p>
           <p className="text-sm text-muted-foreground">
             We never share your data with third parties or use them to train our models of the

@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { supabase } from "../lib/supabaseClient"
-import { useNavigate, Link } from "react-router-dom"
+import { useNavigate, Link, useLocation } from "react-router-dom"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
@@ -9,6 +9,9 @@ export default function Login() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const navigate = useNavigate()
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const redirect = params.get("redirect") || "/dashboard";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -16,7 +19,7 @@ export default function Login() {
     if (error) {
       setError(error.message)
     } else {
-      navigate("/dashboard")
+      navigate(redirect)
     }
   }
 
@@ -43,7 +46,12 @@ export default function Login() {
           Login
         </Button>
         <p className="text-sm text-center mt-4 text-muted">
-          No account? <Link to="/signup" className="text-primary hover:underline">Sign up</Link>
+          No account? <Link
+            to={redirect ? `/signup?redirect=${encodeURIComponent(redirect)}` : "/signup"}
+            className="text-primary hover:underline"
+          >
+            Sign up
+          </Link>
         </p>
       </form>
     </div>
