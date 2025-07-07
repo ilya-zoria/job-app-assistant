@@ -48,7 +48,13 @@ export default {
     				DEFAULT: 'hsl(var(--card))',
     				foreground: 'hsl(var(--card-foreground))'
     			},
-    			'background': '#F0F1EC',
+    			chart: {
+    				'1': 'hsl(var(--chart-1))',
+    				'2': 'hsl(var(--chart-2))',
+    				'3': 'hsl(var(--chart-3))',
+    				'4': 'hsl(var(--chart-4))',
+    				'5': 'hsl(var(--chart-5))'
+    			}
     		},
     		keyframes: {
     			'accordion-down': {
@@ -73,8 +79,11 @@ export default {
     			'accordion-up': 'accordion-up 0.2s ease-out'
     		},
     		fontFamily: {
-    			'instrument-serif': ['"Instrument Serif"', 'serif'],
-    		},
+    			'instrument-serif': [
+    				'Instrument Serif"',
+    				'serif'
+    			]
+    		}
     	}
     },
     plugins: [require("tailwindcss-animate")],

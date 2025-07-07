@@ -35,7 +35,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="w-full max-w-4xl bg-background py-8 space-y-6">
+    <div className="w-full max-w-4xl py-8 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Welcome, {email}</h1>
         <Button onClick={handleLogout} variant="destructive">

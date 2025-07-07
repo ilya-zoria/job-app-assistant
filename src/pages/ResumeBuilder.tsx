@@ -10,6 +10,8 @@ import html2pdf from 'html2pdf.js';
 import Header from '@/components/layout/Header';
 import SectionHeading from '@/components/SectionHeading';
 import { supabase } from '../lib/supabaseClient';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 const emptyResume: ParsedResume = {
   fullName: '',
@@ -30,7 +32,13 @@ const ResumeBuilder = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const ocrText = location.state?.ocrText || '';
-  const [resume, setResume] = useState<ParsedResume>(emptyResume);
+  const getInitialResume = () => {
+    if (location.state?.ocrText) return parseResumeText(location.state.ocrText);
+    const saved = localStorage.getItem('resumeData');
+    if (saved) return JSON.parse(saved);
+    return emptyResume;
+  };
+  const [resume, setResume] = useState<ParsedResume>(getInitialResume());
 
   // Granular page splitting state
   const [pages, setPages] = useState<JSX.Element[][]>([]);
@@ -72,7 +80,7 @@ const ResumeBuilder = () => {
         blocks.push({
           type: 'paragraph',
           key: `summary-line-${i}`,
-          jsx: <div className="text-sm whitespace-pre-line">{line}</div>
+          jsx: <div className="text-sm whitespace-pre-line" key={`summary-line-${i}`}>{line}</div>
         });
       });
     }
@@ -101,7 +109,7 @@ const ResumeBuilder = () => {
             blocks.push({
               type: 'exp-bullet',
               key: `exp-bullet-${idx}-${i}`,
-              jsx: <li className="break-words text-sm">{line.trim()}</li>
+              jsx: <li className="break-words text-sm" key={`exp-bullet-${idx}-${i}`}>{line.trim()}</li>
             });
           });
         }
@@ -132,7 +140,7 @@ const ResumeBuilder = () => {
             blocks.push({
               type: 'edu-bullet',
               key: `edu-bullet-${idx}-${i}`,
-              jsx: <li className="break-words text-sm">{line.trim()}</li>
+              jsx: <li className="break-words text-sm" key={`edu-bullet-${idx}-${i}`}>{line.trim()}</li>
             });
           });
         }
@@ -266,19 +274,12 @@ const ResumeBuilder = () => {
     setMeasuring(true);
   }, [resume]);
 
-  useEffect(() => {
-    if (ocrText) {
-      setResume(parseResumeText(ocrText));
-      setTimeout(() => setMeasuring(true), 100);
-    } else {
-      const saved = localStorage.getItem('resumeData');
-      if (saved) {
-        setResume(JSON.parse(saved));
-        localStorage.removeItem('resumeData');
-        setTimeout(() => setMeasuring(true), 100);
-      }
-    }
-  }, [ocrText]);
+  // Double-trigger measuring on mount to ensure DOM is ready
+  useLayoutEffect(() => {
+    setMeasuring(true);
+    const timeout = setTimeout(() => setMeasuring(true), 100);
+    return () => clearTimeout(timeout);
+  }, []);
 
   useEffect(() => {
     console.log('blockHeights', blockHeights);
@@ -363,9 +364,11 @@ const ResumeBuilder = () => {
   const handleDownload = async () => {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData?.user) {
-      // Not logged in: save resume and redirect to signup
+      console.log('Saving resume to localStorage', resume);
       localStorage.setItem('resumeData', JSON.stringify(resume));
-      navigate('/signup?redirect=/builder');
+      setTimeout(() => {
+        navigate('/signup?redirect=/builder');
+      }, 100); // Delay to ensure localStorage write completes
       return;
     }
     // Logged in: proceed with download
@@ -388,116 +391,184 @@ const ResumeBuilder = () => {
     </div>
   );
 
+  useEffect(() => {
+    if (ocrText) {
+      setResume(parseResumeText(ocrText));
+    }
+  }, [ocrText]);
+
   return (
     <>
       {measuringContainer}
       <Header variant="resume-builder" onDownload={handleDownload} />
       <div className="h-auto flex flex-col md:flex-row gap-8 overflow-x-hidden px-4 md:px-8">
-        {/* Left: Editable fields */}
-        <div className="flex-1 bg-white rounded-xl p-8 min-w-[350px] h-full max-h-screen overflow-y-auto mb-8">
-          <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm mb-1">Full name</label>
-                <Input value={resume.fullName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('fullName', e.target.value)} placeholder="Tom Smith" />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">Job title</label>
-                <Input value={resume.jobTitle} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('jobTitle', e.target.value)} placeholder="Senior Product Designer" />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">Location</label>
-                <Input value={resume.location} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('location', e.target.value)} placeholder="San Francisco, United States" />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">Email</label>
-                <Input value={resume.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('email', e.target.value)} placeholder="tom_smith@gmail.com" />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">Portfolio</label>
-                <Input value={resume.portfolio} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('portfolio', e.target.value)} placeholder="tomsmith.com" />
-              </div>
-              <div>
-                <label className="block text-sm mb-1">LinkedIn</label>
-                <Input value={resume.linkedin} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('linkedin', e.target.value)} placeholder="linkedin.com/in/tom-smith" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm mb-1">Summary</label>
-              <Textarea value={resume.summary} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleChange('summary', e.target.value)} rows={3} />
-              <div className="text-xs text-muted-foreground mt-1">Leave empty if you don't want to include it in the resume</div>
-            </div>
-            <div>
-              <label className="block text-sm mb-1">Experience</label>
-              {resume.experience.map((exp, idx) => (
-                <div key={idx} className="mb-3 p-3 rounded-md border border-border relative">
-                  {/* Remove button in top-right */}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveExperience(idx)}
-                    className="absolute top-[-12px] right-[-12px] w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center bg-white hover:bg-gray-100 transition shadow-sm"
-                    aria-label="Remove experience"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 18 18" className="text-gray-400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M6 6L12 12M12 6L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  </button>
-                  <div className="flex gap-2 mb-2">
-                    <Input className="flex-1" placeholder="Company" value={exp.company} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleExperienceChange(idx, 'company', e.target.value)} />
-                    <Input className="flex-1" placeholder="Job title" value={exp.title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleExperienceChange(idx, 'title', e.target.value)} />
-                    <Input className="flex-1" placeholder="Period" value={exp.period} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleExperienceChange(idx, 'period', e.target.value)} />
+        {/* Left: Tabs and Editor/Tailor content */}
+        <div className="flex-1 min-w-[350px] max-w-[700px] bg-white rounded-xl p-8 h-full max-h-screen overflow-y-auto mb-8">
+          <Tabs defaultValue="editor" className="w-full mb-6">
+            <TabsList className="w-full flex mb-6">
+              <TabsTrigger value="editor" className="flex-1">Editor</TabsTrigger>
+              <TabsTrigger value="tailor" className="flex-1">Tailor for job</TabsTrigger>
+            </TabsList>
+            <TabsContent value="editor">
+              <div className="flex flex-col md:flex-row gap-8">
+                {/* Left: Editable fields */}
+                <div className="flex-1 bg-white rounded-xl p-4 min-w-[350px] h-full max-h-screen overflow-y-auto mb-8">
+                  <div className="flex flex-col gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm mb-1">Full name</label>
+                        <Input value={resume.fullName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('fullName', e.target.value)} placeholder="Tom Smith" />
+                      </div>
+                      <div>
+                        <label className="block text-sm mb-1">Job title</label>
+                        <Input value={resume.jobTitle} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('jobTitle', e.target.value)} placeholder="Senior Product Designer" />
+                      </div>
+                      <div>
+                        <label className="block text-sm mb-1">Location</label>
+                        <Input value={resume.location} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('location', e.target.value)} placeholder="San Francisco, United States" />
+                      </div>
+                      <div>
+                        <label className="block text-sm mb-1">Email</label>
+                        <Input value={resume.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('email', e.target.value)} placeholder="tom_smith@gmail.com" />
+                      </div>
+                      <div>
+                        <label className="block text-sm mb-1">Portfolio</label>
+                        <Input value={resume.portfolio} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('portfolio', e.target.value)} placeholder="tomsmith.com" />
+                      </div>
+                      <div>
+                        <label className="block text-sm mb-1">LinkedIn</label>
+                        <Input value={resume.linkedin} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('linkedin', e.target.value)} placeholder="linkedin.com/in/tom-smith" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm mb-1">Summary</label>
+                      <Textarea value={resume.summary} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleChange('summary', e.target.value)} rows={3} />
+                      <div className="text-xs text-muted-foreground mt-1">Leave empty if you don't want to include it in the resume</div>
+                    </div>
+                    <div>
+                      <label className="block text-sm mb-1">Experience</label>
+                      {resume.experience.map((exp, idx) => (
+                        <div key={idx} className="mb-3 p-3 rounded-md border border-border relative">
+                          {/* Remove button in top-right */}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveExperience(idx)}
+                            className="absolute top-[-12px] right-[-12px] w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center bg-white hover:bg-gray-100 transition shadow-sm"
+                            aria-label="Remove experience"
+                          >
+                            <svg width="18" height="18" viewBox="0 0 18 18" className="text-gray-400" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M6 6L12 12M12 6L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            </svg>
+                          </button>
+                          <div className="flex gap-2 mb-2">
+                            <Input className="flex-1" placeholder="Company" value={exp.company} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleExperienceChange(idx, 'company', e.target.value)} />
+                            <Input className="flex-1" placeholder="Job title" value={exp.title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleExperienceChange(idx, 'title', e.target.value)} />
+                            <Input className="flex-1" placeholder="Period" value={exp.period} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleExperienceChange(idx, 'period', e.target.value)} />
+                          </div>
+                          <Textarea
+                            placeholder={`• Designed a marketing campaign that increased client engagement by 50%\n• Created over 100 graphic designs for various clients, maintaining a 95% client satisfaction rate\n• Revamped a major brand's visual identity, leading to a 30% increase in their social media following`}
+                            value={exp.description}
+                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleExperienceChange(idx, 'description', e.target.value)}
+                            rows={2}
+                          />
+                          {/* <div className="text-xs text-muted-foreground mt-1">
+                            Each line will appear as a bullet point in your resume.
+                          </div> */}
+                        </div>
+                      ))}
+                      <Button variant="outline" onClick={handleAddExperience}>Add experience</Button>
+                    </div>
+                    <div>
+                      <label className="block text-sm mb-1">Education</label>
+                      {resume.education.map((edu, idx) => (
+                        <div key={idx} className="mb-3 p-3 rounded-md border border-border relative">
+                          {/* Remove button in top-right */}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveEducation(idx)}
+                            className="absolute top-[-12px] right-[-12px] w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center bg-white hover:bg-gray-100 transition shadow-sm"
+                            aria-label="Remove education"
+                          >
+                            <svg width="18" height="18" viewBox="0 0 18 18" className="text-gray-400" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M6 6L12 12M12 6L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                            </svg>
+                          </button>
+                          <div className="flex gap-2 mb-2">
+                            <Input className="flex-1" placeholder="School" value={edu.school} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEducationChange(idx, 'school', e.target.value)} />
+                            <Input className="flex-1" placeholder="Degree" value={edu.degree} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEducationChange(idx, 'degree', e.target.value)} />
+                            <Input className="flex-1" placeholder="Period" value={edu.period} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEducationChange(idx, 'period', e.target.value)} />
+                          </div>
+                          <Textarea placeholder="Description" value={edu.description} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleEducationChange(idx, 'description', e.target.value)} rows={2} />
+                        </div>
+                      ))}
+                      <Button variant="outline" onClick={handleAddEducation}>Add education</Button>
+                    </div>
+                    <div>
+                      <label className="block text-sm mb-1">Skills</label>
+                      <Input value={resume.skills} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleListChange('skills', e.target.value)} placeholder="Product design, HTML, CSS, User research" />
+                    </div>
+                    <div>
+                      <label className="block text-sm mb-1">Tools</label>
+                      <Input value={resume.tools} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleListChange('tools', e.target.value)} placeholder="Figma, Cursor, Framer, Notion" />
+                    </div>
+                    <div>
+                      <label className="block text-sm mb-1">Languages</label>
+                      <Input value={resume.languages} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleListChange('languages', e.target.value)} placeholder="English, Ukrainian, Spanish" />
+                    </div>
                   </div>
-                  <Textarea
-                    placeholder={`• Designed a marketing campaign that increased client engagement by 50%\n• Created over 100 graphic designs for various clients, maintaining a 95% client satisfaction rate\n• Revamped a major brand's visual identity, leading to a 30% increase in their social media following`}
-                    value={exp.description}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleExperienceChange(idx, 'description', e.target.value)}
-                    rows={2}
-                  />
-                  {/* <div className="text-xs text-muted-foreground mt-1">
-                    Each line will appear as a bullet point in your resume.
-                  </div> */}
                 </div>
-              ))}
-              <Button variant="outline" onClick={handleAddExperience}>Add experience</Button>
-            </div>
-            <div>
-              <label className="block text-sm mb-1">Education</label>
-              {resume.education.map((edu, idx) => (
-                <div key={idx} className="mb-3 p-3 rounded-md border border-border relative">
-                  {/* Remove button in top-right */}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveEducation(idx)}
-                    className="absolute top-[-12px] right-[-12px] w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center bg-white hover:bg-gray-100 transition shadow-sm"
-                    aria-label="Remove education"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 18 18" className="text-gray-400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M6 6L12 12M12 6L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  </button>
-                  <div className="flex gap-2 mb-2">
-                    <Input className="flex-1" placeholder="School" value={edu.school} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEducationChange(idx, 'school', e.target.value)} />
-                    <Input className="flex-1" placeholder="Degree" value={edu.degree} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEducationChange(idx, 'degree', e.target.value)} />
-                    <Input className="flex-1" placeholder="Period" value={edu.period} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEducationChange(idx, 'period', e.target.value)} />
-                  </div>
-                  <Textarea placeholder="Description" value={edu.description} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleEducationChange(idx, 'description', e.target.value)} rows={2} />
-                </div>
-              ))}
-              <Button variant="outline" onClick={handleAddEducation}>Add education</Button>
-            </div>
-            <div>
-              <label className="block text-sm mb-1">Skills</label>
-              <Input value={resume.skills} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleListChange('skills', e.target.value)} placeholder="Product design, HTML, CSS, User research" />
-            </div>
-            <div>
-              <label className="block text-sm mb-1">Tools</label>
-              <Input value={resume.tools} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleListChange('tools', e.target.value)} placeholder="Figma, Cursor, Framer, Notion" />
-            </div>
-            <div>
-              <label className="block text-sm mb-1">Languages</label>
-              <Input value={resume.languages} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleListChange('languages', e.target.value)} placeholder="English, Ukrainian, Spanish" />
-            </div>
-          </div>
+              </div>
+            </TabsContent>
+            <TabsContent value="tailor">
+              <div className="flex flex-col items-center mx-auto text-center justify-center h-full w-full max-w-[380px]">
+                <img src="/assets/no-tailor-job.png" alt="Upload resume" className="w-40 h-40 text-muted-foreground" />
+                <h2 className="text-xl font-semibold mb-4">Tailor your resume to any job</h2>
+                <p className="text-muted-foreground mb-4">Add company name, job description, custom questions and AI will generate tailored resume for it.</p>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" type="button">Add job details</Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-[600px]">
+                    <DialogHeader>
+                      <DialogTitle>Tailor for job</DialogTitle>
+                      <DialogDescription>
+                        Add company details, job description and custom questions. AI will tailor your resume and answer to questions based on your experience.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form className="space-y-4">
+                      <div className="flex gap-4">
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium mb-1">Company</label>
+                          <input className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Apple" />
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium mb-1">Job title</label>
+                          <input className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Product Designer" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Job description</label>
+                        <textarea className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[60px]" placeholder="Paste the job description here..." />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Custom questions</label>
+                        <input className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm mb-2" placeholder="Why you are great fit for that role?" />
+                        <Button variant="outline" type="button" className="mt-1">Add question</Button>
+                      </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <input type="checkbox" id="cover-letter" className="rounded" />
+                        <label htmlFor="cover-letter" className="text-sm">Generate cover letter</label>
+                      </div>
+                    </form>
+                    <DialogFooter className="mt-6">
+                      <Button variant="outline" type="button">Cancel</Button>
+                      <Button type="submit" className="bg-primary text-white">Tailor my resume</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
         {/* Right: Resume preview */}
         <div className="flex flex-col items-center flex-1 w-full h-full">
