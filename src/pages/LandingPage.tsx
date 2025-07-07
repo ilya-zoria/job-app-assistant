@@ -7,14 +7,36 @@ import VariableProximity from '@/components/VariableProximity';
 // @ts-ignore
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?worker&url';
+import { supabase } from '../lib/supabaseClient';
+import { Download, Trash2 } from 'lucide-react';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+
+function ResumeCard({ resume, onClick }: { resume: any, onClick: () => void }) {
+  return (
+    <div className="bg-[#E9EAE3] rounded-2xl p-4 flex flex-col items-center w-full max-w-xs cursor-pointer transition hover:shadow-lg" onClick={onClick}>
+      <div className="bg-white rounded-xl w-full aspect-[8/11] flex items-center justify-center overflow-hidden mb-4">
+        <img src={resume.preview} alt="Resume preview" className="object-contain w-full h-full" />
+      </div>
+      <div className="w-full flex flex-col gap-1">
+        <div className="font-serif text-lg font-medium">{resume.title}</div>
+        <div className="text-muted-foreground text-sm">{resume.date}</div>
+      </div>
+      <div className="flex gap-2 mt-2 self-end">
+        <Button variant="ghost" size="icon"><Download size={18} /></Button>
+        <Button variant="ghost" size="icon"><Trash2 size={18} /></Button>
+      </div>
+    </div>
+  );
+}
 
 const LandingPage = () => {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
-  const [hasProcessed, setHasProcessed] = useState(false); // Prevents auto-processing
+  const [hasProcessed, setHasProcessed] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [userResumes, setUserResumes] = useState<any[]>([]);
   const navigate = useNavigate();
   const containerRef = React.useRef(null);
 
@@ -23,6 +45,11 @@ const LandingPage = () => {
     setProgress(0);
     setError('');
     setHasProcessed(false);
+    // Check auth
+    supabase.auth.getUser().then(({ data }) => setUser(data?.user || null));
+    // Load resumes from localStorage on mount
+    const stored = localStorage.getItem('userResumes');
+    setUserResumes(stored ? JSON.parse(stored) : []);
   }, []);
 
   const pdfToImages = async (file: File): Promise<string[]> => {
@@ -41,6 +68,12 @@ const LandingPage = () => {
       images.push(canvas.toDataURL('image/png'));
     }
     return images;
+  };
+
+  const addResume = (resume: any) => {
+    const updated = [...userResumes, resume];
+    setUserResumes(updated);
+    localStorage.setItem('userResumes', JSON.stringify(updated));
   };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -84,6 +117,15 @@ const LandingPage = () => {
         );
           ocrText = text;
         }
+        // Save resume to localStorage
+        const newResume = {
+          id: Date.now(),
+          title: file.name.replace(/\.[^/.]+$/, ''),
+          date: new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }),
+          preview: '/assets/resume-preview.png', // Placeholder preview
+          data: { ocrText },
+        };
+        addResume(newResume);
         navigate('/builder', { state: { ocrText } });
       } catch (err) {
         setError('Failed to process file. Please upload a clear image or PDF.');
@@ -92,7 +134,7 @@ const LandingPage = () => {
         setLoading(false);
       }
     }
-  }, [navigate]);
+  }, [navigate, userResumes]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop, 
@@ -102,6 +144,22 @@ const LandingPage = () => {
       'application/pdf': [],
     } 
   });
+
+  if (user && userResumes.length > 0) {
+    return (
+      <div className="min-h-screen bg-[#E9EAE3] px-8 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="font-serif italic text-6xl md:text-7xl text-gray-900">My resumes</h1>
+          <Button className="h-12 px-8 text-lg font-medium" onClick={() => navigate('/builder')}>Create new</Button>
+        </div>
+        <div className="flex flex-wrap gap-8 justify-center">
+          {userResumes.map(resume => (
+            <ResumeCard key={resume.id} resume={resume} onClick={() => navigate('/builder', { state: { resumeData: resume.data } })} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto text-center py-24 max-w-3xl">

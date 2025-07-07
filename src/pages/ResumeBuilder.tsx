@@ -14,7 +14,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { mockJobDetails, mockAISuggestions } from '../lib/mockTailorData';
 import { Check, X, MoreVertical } from 'lucide-react';
-import AISuggestionField from '@/components/ui/AISuggestionField';
 
 const emptyResume: ParsedResume = {
   fullName: '',
@@ -677,6 +676,25 @@ const ResumeBuilder = () => {
     </>
   );
 };
+
+function AISuggestionField({ sectionKey, hoveredSection, setHoveredSection, children }: { sectionKey: string, hoveredSection: string | null, setHoveredSection: (k: string | null) => void, children: React.ReactNode }) {
+  return (
+    <div
+      className={`relative group bg-gray-50 border rounded p-3 text-sm flex items-center justify-between ${hoveredSection === sectionKey ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}
+      onMouseEnter={() => setHoveredSection(sectionKey)}
+      onMouseLeave={() => setHoveredSection(null)}
+    >
+      {hoveredSection === sectionKey && (
+        <div className="absolute top-2 right-2 flex gap-2 z-10">
+          <Button variant="secondary" size="icon" className="size-8"><Check size={18} /></Button>
+          <Button variant="secondary" size="icon" className="size-8"><X size={18} /></Button>
+          <Button variant="secondary" size="icon" className="size-8"><MoreVertical size={18} /></Button>
+        </div>
+      )}
+      <span className="w-full">{children}</span>
+    </div>
+  );
+}
 
 function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSection, setHoveredSection }: any) {
   return (
