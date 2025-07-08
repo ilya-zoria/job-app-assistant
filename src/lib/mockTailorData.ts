@@ -7,7 +7,7 @@ export const mockJobDetails = {
   customQuestions: [
     'Why you are great fit for that role?'
   ],
-  generateCoverLetter: false,
+  generateCoverLetter: true,
 };
 
 export const mockAISuggestions = {
@@ -36,5 +36,8 @@ export const mockAISuggestions = {
       ]
     }
   ],
-  skills: 'User experience design (UX), user interface design (UI), product design, interaction design, information architecture, design systems, responsive web design, prototyping, usability testing, Figma, Sketch, Adobe CC, cross-functional collaboration, AI integration, accessibility, research, product strategy.'
+  skills: 'User experience design (UX), user interface design (UI), product design, interaction design, information architecture, design systems, responsive web design, prototyping, usability testing, Figma, Sketch, Adobe CC, cross-functional collaboration, AI integration, accessibility, research, product strategy.',
+  tools: 'Figma, Sketch, Adobe XD, InVision, Miro, Maze, Hotjar, Notion, Jira, Slack',
+  education: 'M.A. in Human-Computer Interaction, Stanford University (2015-2017)\nB.A. in Graphic Design, University of California, Berkeley (2011-2015)',
+  coverLetter: `Dear Hiring Manager,\n\nI am excited to apply for the Product Designer position at Apple. With over a decade of experience designing user-centered digital products, I have honed my ability to translate complex requirements into intuitive, delightful experiences. My background in EdTech, FinTech, and AI-powered platforms has equipped me with a unique perspective on building scalable solutions that drive measurable impact.\n\nAt Brainly, I led the design of an AI-powered learning companion, collaborating closely with cross-functional teams to deliver features that increased engagement and retention. I am passionate about leveraging research and data to inform design decisions, and I thrive in environments that value innovation and collaboration.\n\nI am eager to bring my skills in UX strategy, inclusive design, and product leadership to Apple, and I look forward to the opportunity to contribute to your mission of creating products people love.\n\nSincerely,\nTom Smith`
 }; 

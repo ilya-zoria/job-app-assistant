@@ -16,30 +16,30 @@ import Download from './pages/Download';
 function AppRoutes() {
   const location = useLocation();
   return (
-    <Routes>
-      {/* Waitlist and Success routes use WaitlistLayout (full screen, no header) */}
-      <Route element={<LandingPageLayout />}>
-        <Route path="/waitlist" element={<Waitlist />} />
-        <Route path="/success" element={<Success />} />
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/download" element={<Download />} />
-      </Route>
+      <Routes>
+        {/* Waitlist and Success routes use WaitlistLayout (full screen, no header) */}
+        <Route element={<LandingPageLayout />}>
+          <Route path="/waitlist" element={<Waitlist />} />
+          <Route path="/success" element={<Success />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/download" element={<Download />} />
+        </Route>
 
-      {/* Auth routes (login/signup) use AuthLayout */}
-      <Route element={<AuthLayout />}>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-      </Route>
+        {/* Auth routes (login/signup) use AuthLayout */}
+        <Route element={<AuthLayout />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+        </Route>
 
-      {/* Dashboard and related routes use DefaultLayout (with header) */}
-      <Route element={<DefaultLayout />}>
-        <Route path="/home" element={<Home />} />
-      </Route>
+        {/* Dashboard and related routes use DefaultLayout (with header) */}
+        <Route element={<DefaultLayout />}>
+          <Route path="/home" element={<Home />} />
+        </Route>
 
-      <Route element={<ResumeBuilderLayout />}>
+        <Route element={<ResumeBuilderLayout />}>
         <Route path="/builder" element={<ResumeBuilder key={location.key} />} />
-      </Route>
-    </Routes>
+        </Route>
+      </Routes> 
   );
 }
 

@@ -13,7 +13,11 @@ import { supabase } from '../lib/supabaseClient';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { mockJobDetails, mockAISuggestions } from '../lib/mockTailorData';
-import { Check, X, MoreVertical } from 'lucide-react';
+import { Check, X, MoreVertical, Copy, Sparkles } from 'lucide-react';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
+import AISuggestionField from '@/components/ui/AISuggestionField';
+import type { AISuggestionFieldMode } from '@/components/ui/AISuggestionField';
+import { RainbowButton } from '@/components/ui/rainbow-button';
 
 const emptyResume: ParsedResume = {
   fullName: '',
@@ -458,15 +462,15 @@ const ResumeBuilder = () => {
       <div className="h-auto flex flex-col md:flex-row gap-8 overflow-x-hidden px-4 md:px-8">
         {/* Left: Tabs and Editor/Tailor content */}
         <div className="flex-1 min-w-[350px] max-w-[700px] bg-white rounded-xl p-8 h-full max-h-screen overflow-y-auto mb-8">
-          <Tabs defaultValue="editor" className="w-full mb-6">
-            <TabsList className="w-full flex mb-6">
+          <Tabs defaultValue="editor" className="w-auto">
+            <TabsList className="w-auto flex mb-8">
               <TabsTrigger value="editor" className="flex-1">Editor</TabsTrigger>
               <TabsTrigger value="tailor" className="flex-1">Tailor for job</TabsTrigger>
             </TabsList>
             <TabsContent value="editor">
               <div className="flex flex-col md:flex-row gap-8">
                 {/* Left: Editable fields */}
-                <div className="flex-1 bg-white rounded-xl p-4 min-w-[350px] h-full max-h-screen overflow-y-auto mb-8">
+                <div className="flex-1 bg min-w-[350px] h-full max-h-screen mb-8">
                   <div className="flex flex-col gap-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
@@ -502,7 +506,7 @@ const ResumeBuilder = () => {
                     <div>
                       <label className="block text-sm mb-1">Experience</label>
                       {resume.experience.map((exp, idx) => (
-                        <div key={idx} className="mb-3 p-3 rounded-md border border-border relative">
+                        <div key={idx} className="mb-3 p-3 rounded-lg border border-border relative">
                           {/* Remove button in top-right */}
                           <button
                             type="button"
@@ -535,7 +539,7 @@ const ResumeBuilder = () => {
                     <div>
                       <label className="block text-sm mb-1">Education</label>
                       {resume.education.map((edu, idx) => (
-                        <div key={idx} className="mb-3 p-3 rounded-md border border-border relative">
+                        <div key={idx} className="mb-3 p-3 rounded-lg border border-border relative">
                           {/* Remove button in top-right */}
                           <button
                             type="button"
@@ -577,13 +581,13 @@ const ResumeBuilder = () => {
               {showAISuggestions ? (
                 <TailoredAISuggestions jobDetails={jobDetails} aiSuggestions={aiSuggestions} onEditJob={handleEditJob} hoveredSection={hoveredSection} setHoveredSection={setHoveredSection} />
               ) : (
-                <div className="flex flex-col items-center mx-auto text-center justify-center h-full w-full max-w-[380px]">
+                <div className="flex flex-col items-center mx-auto text-center justify-center h-full w-full max-w-[380px] my-16">
                   <img src="/assets/no-tailor-job.png" alt="Upload resume" className="w-40 h-40 text-muted-foreground" />
-                  <h2 className="text-xl font-semibold mb-4">Tailor your resume to any job</h2>
-                  <p className="text-muted-foreground mb-4">Add company name, job description, custom questions and AI will generate tailored resume for it.</p>
-                  <Button variant="outline" type="button" onClick={() => setDialogOpen(true)}>
+                  <h2 className="text-xl font-semibold mb-2">Tailor your resume to any job</h2>
+                  <p className="text-muted-foreground mb-8">Add company name, job description, custom questions and AI will generate tailored resume for it.</p>
+                  <RainbowButton type="button" onClick={() => setDialogOpen(true)}>
                     Add job details
-                  </Button>
+                  </RainbowButton>
                 </div>
               )}
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -598,23 +602,23 @@ const ResumeBuilder = () => {
                     <div className="flex gap-4">
                       <div className="flex-1">
                         <label className="block text-sm font-medium mb-1">Company</label>
-                        <input name="company" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Apple" defaultValue={jobDetails.company} />
+                        <input name="company" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" placeholder="Apple" defaultValue={jobDetails.company} />
                       </div>
                       <div className="flex-1">
                         <label className="block text-sm font-medium mb-1">Job title</label>
-                        <input name="jobTitle" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Product Designer" defaultValue={jobDetails.jobTitle} />
+                        <input name="jobTitle" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" placeholder="Product Designer" defaultValue={jobDetails.jobTitle} />
                       </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Job description</label>
-                      <textarea name="jobDescription" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[120px]" placeholder="Paste the job description here..." defaultValue={jobDetails.jobDescription} />
+                      <textarea name="jobDescription" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm min-h-[120px]" placeholder="Paste the job description here..." defaultValue={jobDetails.jobDescription} />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Custom questions</label>
                       {modalQuestions.map((q, idx) => (
                         <div key={idx} className="flex items-center gap-2 mb-2">
                           <input
-                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                             placeholder="Why you are great fit for that role?"
                             value={q}
                             onChange={e => handleQuestionChange(idx, e.target.value)}
@@ -642,7 +646,7 @@ const ResumeBuilder = () => {
                               <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
                               <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill"/>
                             </svg>
-                            Tailoring...
+                            Tailoring
                           </span>
                         ) : (
                           'Tailor my resume'
@@ -659,7 +663,7 @@ const ResumeBuilder = () => {
         <div className="flex flex-col items-center flex-1 w-full h-full">
           <div
             ref={previewRef}
-            className={`bg-white rounded-xl border border-border w-[816px] mx-auto mb-8 p-10 overflow-y-auto max-w-full${!isExportingPDF ? ' h-[1056px]' : ''}`}
+            className={`bg-white rounded-xl w-[816px] mx-auto mb-8 p-10 overflow-y-auto max-w-full${!isExportingPDF ? ' h-[1056px]' : ''}`}
           >
             {pages.map((page, index) => (
               <div key={index} className="mb-8">
@@ -677,64 +681,116 @@ const ResumeBuilder = () => {
   );
 };
 
-function AISuggestionField({ sectionKey, hoveredSection, setHoveredSection, children }: { sectionKey: string, hoveredSection: string | null, setHoveredSection: (k: string | null) => void, children: React.ReactNode }) {
-  return (
-    <div
-      className={`relative group bg-gray-50 border rounded p-3 text-sm flex items-center justify-between ${hoveredSection === sectionKey ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`}
-      onMouseEnter={() => setHoveredSection(sectionKey)}
-      onMouseLeave={() => setHoveredSection(null)}
-    >
-      {hoveredSection === sectionKey && (
-        <div className="absolute top-2 right-2 flex gap-2 z-10">
-          <Button variant="secondary" size="icon" className="size-8"><Check size={18} /></Button>
-          <Button variant="secondary" size="icon" className="size-8"><X size={18} /></Button>
-          <Button variant="secondary" size="icon" className="size-8"><MoreVertical size={18} /></Button>
-        </div>
-      )}
-      <span className="w-full">{children}</span>
-    </div>
-  );
-}
-
 function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSection, setHoveredSection }: any) {
+  // Copy handler
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
   return (
-    <div className="w-full max-w-2xl mx-auto bg-white rounded-xl shadow p-6 mt-6">
-      <div className="flex items-center justify-between mb-4">
-        <span className="px-3 py-1 rounded bg-gray-100 text-gray-700 font-medium text-sm">Tailored to {jobDetails.company}</span>
-        <Button variant="outline" size="sm" onClick={onEditJob}>Edit job details</Button>
+    <div className="w-full mx-auto rounded-xl">
+      <div className="flex items-center justify-between mb-4 border rounded-lg border-slate-200 p-2">
+        <div className="flex items-center pl-2">
+          <Sparkles size={18} />
+          <span className="text-base pl-2 font-medium">Tailored to {jobDetails.company}</span>
+        </div>
+        <Button variant="ghost" onClick={onEditJob}>Edit job details</Button>
       </div>
-      <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">AI suggestions <span className="text-xs bg-gray-100 rounded px-2 py-0.5">15</span></h3>
-      {/* Summary */}
-      <div className="mb-6">
-        <div className="font-semibold mb-1">Summary</div>
-        <AISuggestionField sectionKey="summary" hoveredSection={hoveredSection} setHoveredSection={setHoveredSection}>
-          {aiSuggestions.summary}
-        </AISuggestionField>
-      </div>
-      {/* Work Experience */}
-      <div className="mb-6">
-        <div className="font-semibold mb-1">Work experience</div>
-        {aiSuggestions.workExperience.map((exp: any, i: number) => (
-          <div key={i} className="mb-3">
-            <AISuggestionField sectionKey={`work-${i}`} hoveredSection={hoveredSection} setHoveredSection={setHoveredSection}>
-              <div className="w-full">
-                <div className="font-medium">{exp.company} — {exp.title}</div>
-                <div className="text-xs text-gray-500 mb-1">{exp.date}</div>
-                <ul className="list-disc pl-5">
-                  {exp.bullets.map((b: string, j: number) => <li key={j}>{b}</li>)}
-                </ul>
+      <Accordion type="multiple" className="w-full">
+        {/* AI Suggestions Section */}
+        <AccordionItem value="ai-suggestions">
+          <AccordionTrigger>AI suggestions</AccordionTrigger>
+          <AccordionContent className="flex flex-col gap-4">
+            {/* Summary */}
+            <div>
+              <div className="font-semibold mb-2">Summary</div>
+              <AISuggestionField sectionKey="summary" hoveredSection={hoveredSection} setHoveredSection={setHoveredSection} mode="ai">
+                {aiSuggestions.summary}
+              </AISuggestionField>
+            </div>
+            {/* Work Experience */}
+            <div>
+              <div className="font-semibold mb-2">Work experience</div>
+              {aiSuggestions.workExperience?.map((exp: any, i: number) => (
+                <div key={i} className="mb-3">
+                  <AISuggestionField sectionKey={`work-${i}`} hoveredSection={hoveredSection} setHoveredSection={setHoveredSection} mode="ai">
+                    <div className="w-full">
+                      <div className="font-medium">{exp.company} — {exp.title}</div>
+                      <div className="text-xs text-gray-500 mb-1">{exp.date}</div>
+                      <ul className="list-disc pl-5">
+                        {exp.bullets.map((b: string, j: number) => <li key={j}>{b}</li>)}
+                      </ul>
+                    </div>
+                  </AISuggestionField>
+                </div>
+              ))}
+            </div>
+            {/* Skills */}
+            <div>
+              <div className="font-semibold mb-2">Skills</div>
+              <AISuggestionField sectionKey="skills" hoveredSection={hoveredSection} setHoveredSection={setHoveredSection} mode="ai">
+                {aiSuggestions.skills}
+              </AISuggestionField>
+            </div>
+            {/* Tools */}
+            {aiSuggestions.tools && (
+              <div>
+                <div className="font-semibold mb-2">Tools</div>
+                <AISuggestionField sectionKey="tools" hoveredSection={hoveredSection} setHoveredSection={setHoveredSection} mode="ai">
+                  {aiSuggestions.tools}
+                </AISuggestionField>
               </div>
-            </AISuggestionField>
-          </div>
-        ))}
-      </div>
-      {/* Skills */}
-      <div className="mb-2">
-        <div className="font-semibold mb-1">Skills</div>
-        <AISuggestionField sectionKey="skills" hoveredSection={hoveredSection} setHoveredSection={setHoveredSection}>
-          {aiSuggestions.skills}
-        </AISuggestionField>
-      </div>
+            )}
+            {/* Education */}
+            {aiSuggestions.education && (
+              <div>
+                <div className="font-semibold mb-2">Education</div>
+                <AISuggestionField sectionKey="education" hoveredSection={hoveredSection} setHoveredSection={setHoveredSection} mode="ai">
+                  {aiSuggestions.education}
+                </AISuggestionField>
+              </div>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+        {/* Custom Questions Section */}
+        {jobDetails.customQuestions && jobDetails.customQuestions.length > 0 && (
+          <AccordionItem value="custom-questions">
+            <AccordionTrigger>Custom questions</AccordionTrigger>
+            <AccordionContent>
+              {jobDetails.customQuestions.map((q: string, idx: number) => (
+                <div key={idx} className="mb-4">
+                  <div className="font-semibold mb-2">{q}</div>
+                  <AISuggestionField
+                    sectionKey={`custom-question-${idx}`}
+                    hoveredSection={hoveredSection}
+                    setHoveredSection={setHoveredSection}
+                    mode="copy"
+                    onCopy={() => handleCopy(`I have solid hands-on experience conducting user research and validation throughout the product design process. I've planned and run user interviews, usability tests, and prototype validation sessions to understand user needs and validate key flows or concepts. I often collaborate with PMs or UX researchers but can also lead lean research myself — from creating scripts to synthesizing insights. At Brainly, for example, I interviewed ~20 students and ran usability tests to improve an AI learning companion. This helped uncover critical friction points and led to measurable increases in engagement. I regularly use tools like Maze, Hotjar, and Figma prototypes to gather feedback efficiently.`)}
+                  >
+                    I have solid hands-on experience conducting user research and validation throughout the product design process. I've planned and run user interviews, usability tests, and prototype validation sessions to understand user needs and validate key flows or concepts. I often collaborate with PMs or UX researchers but can also lead lean research myself — from creating scripts to synthesizing insights. At Brainly, for example, I interviewed ~20 students and ran usability tests to improve an AI learning companion. This helped uncover critical friction points and led to measurable increases in engagement. I regularly use tools like Maze, Hotjar, and Figma prototypes to gather feedback efficiently.
+                  </AISuggestionField>
+                </div>
+              ))}
+            </AccordionContent>
+          </AccordionItem>
+        )}
+        {/* Cover Letter Section */}
+        {jobDetails.generateCoverLetter && aiSuggestions.coverLetter && (
+          <AccordionItem value="cover-letter">
+            <AccordionTrigger>Cover letter</AccordionTrigger>
+            <AccordionContent>
+              <AISuggestionField
+                sectionKey="cover-letter"
+                hoveredSection={hoveredSection}
+                setHoveredSection={setHoveredSection}
+                mode="copy"
+                onCopy={() => handleCopy(aiSuggestions.coverLetter)}
+              >
+                <div className="whitespace-pre-line">{aiSuggestions.coverLetter}</div>
+              </AISuggestionField>
+            </AccordionContent>
+          </AccordionItem>
+        )}
+      </Accordion>
     </div>
   );
 }
