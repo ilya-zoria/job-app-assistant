@@ -15,7 +15,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 function ResumeCard({ resume, onClick }: { resume: any, onClick: () => void }) {
   return (
     <div className="bg-[#E9EAE3] rounded-2xl p-4 flex flex-col items-center w-full max-w-xs cursor-pointer transition hover:shadow-lg" onClick={onClick}>
-      <div className="bg-white rounded-xl w-full aspect-[8/11] flex items-center justify-center overflow-hidden mb-4">
+      <div className="bg-white rounded-xl w-full flex items-center justify-center overflow-hidden mb-4">
         <img src={resume.preview} alt="Resume preview" className="object-contain w-full h-full" />
       </div>
       <div className="w-full flex flex-col gap-1">
@@ -147,9 +147,9 @@ const LandingPage = () => {
 
   if (user && userResumes.length > 0) {
     return (
-      <div className="min-h-screen bg-[#E9EAE3] px-8 py-8">
+      <div className="min-h-screen px-8 py-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="font-serif italic text-6xl md:text-7xl text-gray-900">My resumes</h1>
+          <h1>My resumes</h1>
           <Button className="h-12 px-8 text-lg font-medium" onClick={() => navigate('/builder')}>Create new</Button>
         </div>
         <div className="flex flex-wrap gap-8 justify-center">
@@ -163,8 +163,8 @@ const LandingPage = () => {
 
   return (
     <div className="mx-auto text-center py-24 max-w-3xl">
-      {/* <h1 className="text-5xl font-serif mb-4">Apply smarter with<br/>AI-tailored resumes</h1> */}
-      <div
+      <h1>Apply smarter with<br/>AI-tailored resumes</h1>
+      {/* <div
         ref={containerRef}
         style={{position: 'relative'}}
         >
@@ -178,7 +178,7 @@ const LandingPage = () => {
           falloff="exponential"
           style={{ fontFamily: "'Savate', sans-serif" }}
         />
-      </div>
+      </div> */}
       <p className="text-muted-foreground text-xl mb-12 mt-6">Upload your resume, job description and get tailored resume</p>
       
       <div

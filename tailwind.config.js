@@ -91,11 +91,11 @@ export default {
     		animation: {
     			'accordion-down': 'accordion-down 0.2s ease-out',
     			'accordion-up': 'accordion-up 0.2s ease-out',
-    			rainbow: 'rainbow var(--speed, 2s) infinite linear'
+    			rainbow: 'rainbow var(--speed, 3s) infinite linear'
     		},
     		fontFamily: {
     			'instrument-serif': [
-    				'Instrument Serif"',
+    				'Instrument Serif',
     				'serif'
     			]
     		}

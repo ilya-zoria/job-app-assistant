@@ -18,6 +18,8 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/
 import AISuggestionField from '@/components/ui/AISuggestionField';
 import type { AISuggestionFieldMode } from '@/components/ui/AISuggestionField';
 import { RainbowButton } from '@/components/ui/rainbow-button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 const emptyResume: ParsedResume = {
   fullName: '',
@@ -593,32 +595,32 @@ const ResumeBuilder = () => {
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent className="sm:max-w-[600px]">
                   <DialogHeader>
-                    <DialogTitle>Tailor for job</DialogTitle>
+                    <DialogTitle>Add job details</DialogTitle>
                     <DialogDescription>
                       Add company details, job description and custom questions. AI will tailor your resume and answer to questions based on your experience.
                     </DialogDescription>
                   </DialogHeader>
-                  <form className="space-y-4" onSubmit={handleTailorSubmit}>
+                  <form className="space-y-8" onSubmit={handleTailorSubmit}>
                     <div className="flex gap-4">
                       <div className="flex-1">
                         <label className="block text-sm font-medium mb-1">Company</label>
-                        <input name="company" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" placeholder="Apple" defaultValue={jobDetails.company} />
+                        <Input name="company" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" placeholder="Apple" defaultValue={jobDetails.company} />
                       </div>
                       <div className="flex-1">
                         <label className="block text-sm font-medium mb-1">Job title</label>
-                        <input name="jobTitle" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" placeholder="Product Designer" defaultValue={jobDetails.jobTitle} />
+                        <Input name="jobTitle" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" placeholder="Product Designer" defaultValue={jobDetails.jobTitle} />
                       </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Job description</label>
-                      <textarea name="jobDescription" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm min-h-[120px]" placeholder="Paste the job description here..." defaultValue={jobDetails.jobDescription} />
+                      <Textarea name="jobDescription" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm min-h-[120px]" placeholder="Paste the job description here..." defaultValue={jobDetails.jobDescription} />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Custom questions</label>
                       {modalQuestions.map((q, idx) => (
                         <div key={idx} className="flex items-center gap-2 mb-2">
-                          <input
-                            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                          <Input
+                            className="w-full"
                             placeholder="Why you are great fit for that role?"
                             value={q}
                             onChange={e => handleQuestionChange(idx, e.target.value)}
@@ -633,9 +635,23 @@ const ResumeBuilder = () => {
                       ))}
                       <Button variant="outline" type="button" className="mt-1" onClick={handleAddQuestion}>Add question</Button>
                     </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <input name="coverLetter" type="checkbox" id="cover-letter" className="rounded" defaultChecked={jobDetails.generateCoverLetter} />
-                      <label htmlFor="cover-letter" className="text-sm">Generate cover letter</label>
+                    <div className="flex items-start gap-3 mt-2">
+                      <label className="w-full cursor-pointer hover:bg-slate-50 flex items-start gap-3 rounded-lg border p-3 has-[[aria-checked=true]]:border-slate-900 dark:has-[[aria-checked=true]]:border-slate-900 dark:has-[[aria-checked=true]]:bg-blue-950">
+                        <Checkbox
+                          id="cover-letter"
+                          name="coverLetter"
+                          defaultChecked={jobDetails.generateCoverLetter}
+                          className="data-[state=checked]:border-slate-900 data-[state=checked]:bg-slate-900 data-[state=checked]:text-white dark:data-[state=checked]:border-bl-slate-700 dark:data-[state=checked]:bg-bl-slate-700 transition-colors duration-150"
+                        />
+                        <div className="grid gap-1.5 font-normal">
+                          <p className="text-sm leading-none font-medium">
+                            Generate cover letter
+                          </p>
+                          <p className="text-muted-foreground text-sm">
+                            AI will generate a tailored cover letter for this job.
+                          </p>
+                        </div>
+                      </label>
                     </div>
                     <DialogFooter className="mt-6">
                       <Button variant="outline" type="button" onClick={() => setDialogOpen(false)} disabled={showProcessing}>Cancel</Button>
