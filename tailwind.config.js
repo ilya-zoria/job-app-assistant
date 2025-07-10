@@ -95,7 +95,7 @@ export default {
     		},
     		fontFamily: {
     			'instrument-serif': [
-    				'Instrument Serif',
+    				'Instrument Serif', 
     				'serif'
     			]
     		}

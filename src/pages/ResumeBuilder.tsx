@@ -20,6 +20,7 @@ import type { AISuggestionFieldMode } from '@/components/ui/AISuggestionField';
 import { RainbowButton } from '@/components/ui/rainbow-button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { generateTailoredResumeWithGemini } from '@/lib/geminiClient';
 
 const emptyResume: ParsedResume = {
   fullName: '',
@@ -40,7 +41,9 @@ const ResumeBuilder = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const ocrText = location.state?.ocrText || '';
+  const resumeData = location.state?.resumeData;
   const getInitialResume = () => {
+    if (resumeData) return resumeData;
     if (location.state?.ocrText) return parseResumeText(location.state.ocrText);
     const saved = localStorage.getItem('resumeData');
     if (saved) return JSON.parse(saved);
@@ -61,7 +64,7 @@ const ResumeBuilder = () => {
   const [showProcessing, setShowProcessing] = useState(false);
   const [showAISuggestions, setShowAISuggestions] = useState(false);
   const [jobDetails, setJobDetails] = useState<any>(mockJobDetails);
-  const [aiSuggestions] = useState<any>(mockAISuggestions);
+  const [aiSuggestions, setAISuggestions] = useState<any>(mockAISuggestions);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [modalQuestions, setModalQuestions] = useState<string[]>(jobDetails.customQuestions || ['']);
 
@@ -102,13 +105,14 @@ const ResumeBuilder = () => {
       });
     }
     // Work Experience
-    if (resume.experience.length > 0) {
+    const experienceArr = Array.isArray(resume.experience) ? resume.experience : [];
+    if (experienceArr.length > 0) {
       blocks.push({
         type: 'section-heading',
         key: 'workexp-heading',
         jsx: <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Work Experience</SectionHeading>
       });
-      resume.experience.forEach((exp, idx) => {
+      experienceArr.forEach((exp, idx) => {
         blocks.push({
           type: 'exp-header',
           key: `exp-header-${idx}`,
@@ -133,13 +137,14 @@ const ResumeBuilder = () => {
       });
     }
     // Education
-    if (resume.education.length > 0) {
+    const educationArr = Array.isArray(resume.education) ? resume.education : [];
+    if (educationArr.length > 0) {
       blocks.push({
         type: 'section-heading',
         key: 'edu-heading',
         jsx: <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Education</SectionHeading>
       });
-      resume.education.forEach((edu, idx) => {
+      educationArr.forEach((edu, idx) => {
         blocks.push({
           type: 'edu-header',
           key: `edu-header-${idx}`,
@@ -409,10 +414,12 @@ const ResumeBuilder = () => {
   );
 
   useEffect(() => {
-    if (ocrText) {
+    if (resumeData) {
+      setResume(resumeData);
+    } else if (ocrText) {
       setResume(parseResumeText(ocrText));
     }
-  }, [ocrText]);
+  }, [resumeData, ocrText]);
 
   // Sync modalQuestions with jobDetails when dialog opens
   useEffect(() => {
@@ -433,7 +440,7 @@ const ResumeBuilder = () => {
   };
 
   // Handler for dialog submit
-  const handleTailorSubmit = (e: React.FormEvent) => {
+  const handleTailorSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
@@ -446,11 +453,24 @@ const ResumeBuilder = () => {
     };
     setJobDetails(newJobDetails);
     setShowProcessing(true);
-    setTimeout(() => {
+    try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) throw new Error('Missing Gemini API key');
+      const geminiResult = await generateTailoredResumeWithGemini({
+        resume,
+        jobDetails: newJobDetails,
+        apiKey,
+      });
+      setAISuggestions(geminiResult);
+      setShowAISuggestions(true);
+    } catch (err) {
+      // Optionally show error to user
+      console.error('Gemini error', err);
+      alert('Failed to generate tailored suggestions. Please try again.');
+    } finally {
       setShowProcessing(false);
       setDialogOpen(false);
-      setShowAISuggestions(true);
-    }, 2000);
+    }
   };
 
   const handleEditJob = () => {
@@ -507,7 +527,7 @@ const ResumeBuilder = () => {
                     </div>
                     <div>
                       <label className="block text-sm mb-1">Experience</label>
-                      {resume.experience.map((exp, idx) => (
+                      {(Array.isArray(resume.experience) ? resume.experience : []).map((exp, idx) => (
                         <div key={idx} className="mb-3 p-3 rounded-lg border border-border relative">
                           {/* Remove button in top-right */}
                           <button
@@ -540,7 +560,7 @@ const ResumeBuilder = () => {
                     </div>
                     <div>
                       <label className="block text-sm mb-1">Education</label>
-                      {resume.education.map((edu, idx) => (
+                      {(Array.isArray(resume.education) ? resume.education : []).map((edu, idx) => (
                         <div key={idx} className="mb-3 p-3 rounded-lg border border-border relative">
                           {/* Remove button in top-right */}
                           <button
