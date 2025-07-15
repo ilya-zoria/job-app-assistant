@@ -154,17 +154,19 @@ const ResumeBuilder = () => {
             <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Work Experience</SectionHeading>
             <div className="flex flex-col gap-3">
               {experienceArr.map((exp, idx) => (
-                <div key={idx}>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="font-bold text-sm">{exp.company} — {exp.title}</div>
-                    <div className="flex flex-col items-end min-w-[120px]">
-                      {exp.period && <div className="italic text-sm text-right whitespace-nowrap">{exp.period}</div>}
-                      {exp.location && <div className="text-sm text-right text-gray-700">{exp.location}</div>}
-                    </div>
+                <div key={idx} className="flex flex-row gap-4">
+                  {/* Left column: Company, Title, Description */}
+                  <div className="flex-1 min-w-0">
+                    <div className={`font-bold text-sm ${(exp.company || exp.title) ? '' : 'text-gray-500'}`}>{(exp.company || exp.title) ? `${exp.company || 'Company'} — ${exp.title || 'Job title'}` : 'Company — Job title'}</div>
+                    {exp.description && exp.description.split(/\n|•/).filter(Boolean).map((line, i) => (
+                      <div key={i} className="break-words text-sm">{line.trim()}</div>
+                    ))}
                   </div>
-                  {exp.description && exp.description.split(/\n|•/).filter(Boolean).map((line, i) => (
-                    <div key={i} className="break-words text-sm">{line.trim()}</div>
-                  ))}
+                  {/* Right column: Period, Location */}
+                  <div className="flex flex-col items-end min-w-[120px] flex-shrink-0">
+                    <div className={`italic text-sm text-right whitespace-nowrap ${exp.period ? '' : 'text-gray-500'}`}>{exp.period || 'Period'}</div>
+                    <div className={`italic text-sm text-right ${exp.location ? '' : 'text-gray-500'}`}>{exp.location || 'Location'}</div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -183,17 +185,19 @@ const ResumeBuilder = () => {
             <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Education</SectionHeading>
             <div className="flex flex-col gap-3">
               {educationArr.map((edu, idx) => (
-                <div key={idx}>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="font-bold text-base">{edu.school} — {edu.degree}</div>
-                    <div className="flex flex-col items-end min-w-[120px]">
-                      {edu.period && <div className="italic text-sm text-right whitespace-nowrap">{edu.period}</div>}
-                      {edu.location && <div className="text-sm text-right text-gray-700">{edu.location}</div>}
-                    </div>
+                <div key={idx} className="flex flex-row gap-4">
+                  {/* Left column: School, Degree, Description */}
+                  <div className="flex-1 min-w-0">
+                    <div className={`font-bold text-sm ${(edu.school || edu.degree) ? '' : 'text-gray-500'}`}>{(edu.school || edu.degree) ? `${edu.school || 'School'} — ${edu.degree || 'Degree'}` : 'School — Degree'}</div>
+                    {edu.description && edu.description.split(/\n|•/).filter(Boolean).map((line, i) => (
+                      <div key={i} className="break-words text-sm">{line.trim()}</div>
+                    ))}
                   </div>
-                  {edu.description && edu.description.split(/\n|•/).filter(Boolean).map((line, i) => (
-                    <div key={i} className="break-words text-sm">{line.trim()}</div>
-                  ))}
+                  {/* Right column: Period, Location */}
+                  <div className="flex flex-col items-end min-w-[120px] flex-shrink-0">
+                    <div className={`italic text-sm text-right whitespace-nowrap ${edu.period ? '' : 'text-gray-500'}`}>{edu.period || 'Period'}</div>
+                    <div className={`italic text-sm text-right ${edu.location ? '' : 'text-gray-500'}`}>{edu.location || 'Location'}</div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -415,7 +419,7 @@ const ResumeBuilder = () => {
     if (previewRef.current) {
       setIsExportingPDF(true);
       // Wait for DOM to update
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise(resolve => setTimeout(resolve, 300));
       await html2pdf()
         .set({
           margin: 0,
@@ -501,6 +505,11 @@ const ResumeBuilder = () => {
       customQuestions: modalQuestions.filter(q => q.trim() !== ''),
       generateCoverLetter: !!formData.get('coverLetter'),
     };
+    // Validation for required fields
+    if (!newJobDetails.company.trim() || !newJobDetails.jobTitle.trim() || !newJobDetails.jobDescription.trim()) {
+      toast.error('Company, Job title, and Job description are required.');
+      return;
+    }
     setJobDetails(newJobDetails);
     setShowProcessing(true);
     try {
@@ -538,7 +547,7 @@ const ResumeBuilder = () => {
       <Header variant="resume-builder" onDownload={handleDownload} />
       <div className="h-auto flex flex-col md:flex-row gap-8 overflow-x-hidden px-4 md:px-8">
         {/* Left: Tabs and Editor/Tailor content */}
-        <div className="flex-1 min-w-[350px] max-w-[700px] bg-white rounded-xl p-8 h-full max-h-screen overflow-y-auto mb-8">
+        <div className="flex-1 min-w-[350px] max-w-[700px] bg-white rounded-xl p-10 h-full max-h-screen overflow-y-auto mb-8">
           <Tabs defaultValue="editor" className="w-auto">
             <TabsList className="w-auto flex mb-6">
               <TabsTrigger value="editor" className="flex-1">Editor</TabsTrigger>
@@ -596,7 +605,7 @@ const ResumeBuilder = () => {
                           <button
                             type="button"
                             onClick={() => handleRemoveExperience(idx)}
-                            className="absolute top-[-12px] right-[-12px] w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center bg-white hover:bg-gray-100 transition shadow-sm"
+                            className="absolute top-[-12px] right-[-5px] w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center bg-white hover:bg-gray-100 transition shadow-sm"
                             aria-label="Remove experience"
                           >
                             <svg width="18" height="18" viewBox="0 0 18 18" className="text-gray-400" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -633,7 +642,7 @@ const ResumeBuilder = () => {
                           <button
                             type="button"
                             onClick={() => handleRemoveEducation(idx)}
-                            className="absolute top-[-12px] right-[-12px] w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center bg-white hover:bg-gray-100 transition shadow-sm"
+                            className="absolute top-[-12px] right-[-5px] w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center bg-white hover:bg-gray-100 transition shadow-sm"
                             aria-label="Remove education"
                           >
                             <svg width="18" height="18" viewBox="0 0 18 18" className="text-gray-400" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -728,16 +737,16 @@ const ResumeBuilder = () => {
                     <div className="flex gap-4">
                       <div className="flex-1">
                         <label className="block text-sm font-medium mb-1">Company</label>
-                        <Input name="company" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" placeholder="Apple" defaultValue={jobDetails.company} />
+                        <Input name="company" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" placeholder="Apple" defaultValue={jobDetails.company} required />
                       </div>
                       <div className="flex-1">
                         <label className="block text-sm font-medium mb-1">Job title</label>
-                        <Input name="jobTitle" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" placeholder="Product Designer" defaultValue={jobDetails.jobTitle} />
+                        <Input name="jobTitle" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" placeholder="Product Designer" defaultValue={jobDetails.jobTitle} required />
                       </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Job description</label>
-                      <Textarea name="jobDescription" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm min-h-[120px]" placeholder="Paste the job description here..." defaultValue={jobDetails.jobDescription} />
+                      <Textarea name="jobDescription" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm min-h-[120px]" placeholder="Paste the job description here..." defaultValue={jobDetails.jobDescription} required />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Custom questions</label>
@@ -860,9 +869,6 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
     } else if (sectionKey === 'tools') {
       setResume((prev: any) => ({ ...prev, tools: aiSuggestions.tools }));
       setAISuggestions((prev: any) => ({ ...prev, tools: undefined }));
-    } else if (sectionKey === 'education') {
-      setResume((prev: any) => ({ ...prev, education: aiSuggestions.education }));
-      setAISuggestions((prev: any) => ({ ...prev, education: undefined }));
     } else if (sectionKey.startsWith('custom-question-')) {
       const i = idx ?? parseInt(sectionKey.split('-')[2], 10);
       // Accept: copy to clipboard and remove suggestion
@@ -889,8 +895,6 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
       setAISuggestions((prev: any) => ({ ...prev, skills: undefined }));
     } else if (sectionKey === 'tools') {
       setAISuggestions((prev: any) => ({ ...prev, tools: undefined }));
-    } else if (sectionKey === 'education') {
-      setAISuggestions((prev: any) => ({ ...prev, education: undefined }));
     } else if (sectionKey.startsWith('custom-question-')) {
       const i = idx ?? parseInt(sectionKey.split('-')[2], 10);
       setAISuggestions((prev: any) => ({
@@ -919,8 +923,6 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
         setAISuggestions((prev: any) => ({ ...prev, skills: newSuggestions.skills }));
       } else if (sectionKey === 'tools') {
         setAISuggestions((prev: any) => ({ ...prev, tools: newSuggestions.tools }));
-      } else if (sectionKey === 'education') {
-        setAISuggestions((prev: any) => ({ ...prev, education: newSuggestions.education }));
       } else if (sectionKey.startsWith('custom-question-')) {
         const i = idx ?? parseInt(sectionKey.split('-')[2], 10);
         if (newSuggestions.customQuestionAnswers && newSuggestions.customQuestionAnswers[i]) {
@@ -948,8 +950,7 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
     (aiSuggestions.summary && aiSuggestions.summary.trim()) ||
     (aiSuggestions.workExperience && aiSuggestions.workExperience.length > 0) ||
     (aiSuggestions.skills && aiSuggestions.skills.trim()) ||
-    (aiSuggestions.tools && aiSuggestions.tools.trim()) ||
-    (aiSuggestions.education && aiSuggestions.education.trim())
+    (aiSuggestions.tools && aiSuggestions.tools.trim())
   );
   return (
     <div className="w-full mx-auto rounded-xl">
@@ -1010,23 +1011,6 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
                       </AISuggestionField>
                     </div>
                   ))}
-                </div>
-              )}
-              {/* Education */}
-              {aiSuggestions.education && (
-                <div>
-                  <div className="font-semibold mb-2">Education</div>
-                  <AISuggestionField
-                    sectionKey="education"
-                    hoveredSection={hoveredSection}
-                    setHoveredSection={setHoveredSection}
-                    mode="ai"
-                    onAccept={() => handleAccept('education')}
-                    onDecline={() => handleDecline('education')}
-                    onRegenerate={() => handleRegenerate('education')}
-                  >
-                    {regenerating === 'education' ? <TextShimmer>Regenerating...</TextShimmer> : aiSuggestions.education}
-                  </AISuggestionField>
                 </div>
               )}
               {/* Skills */}

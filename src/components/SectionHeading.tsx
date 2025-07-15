@@ -12,17 +12,19 @@ const SectionHeading: React.FC<SectionHeadingProps> = ({
   variant = 'preview',
 }) => {
   if (variant === 'pdf') {
-    // PDF export style: full-width border under the text
+    // PDF export style
     return (
-      <div className={`font-bold uppercase text-sm border-b border-gray-300 pb-3 mb-2 tracking-wider text-left ${className}`}>
-        {children}
+      <div className={`text-left ${className}`}>
+        <div className="font-bold uppercase text-sm mb-6 tracking-wider">{children}</div>
+        <div className="w-full h-px bg-gray-300 mb-2" />
       </div>
     );
   }
-  // Preview style: title left, border to the right
+  // Preview style
   return (
-    <div className={`font-bold uppercase text-sm border-b border-gray-300 pb-1 mb-2 tracking-wider text-left ${className}`}>
-      {children}
+    <div className={`text-left ${className}`}>
+      <div className="font-bold uppercase text-sm mb-2 tracking-wider">{children}</div>
+      <div className="w-full h-px bg-gray-300 mb-2" />
     </div>
   );
 };
