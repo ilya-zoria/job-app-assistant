@@ -11,6 +11,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+
 
 interface HeaderProps {
   variant?: 'default' | 'resume-builder';
@@ -19,6 +21,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ variant = 'default', onDownload }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const location = useLocation();
 
@@ -26,6 +29,7 @@ const Header: React.FC<HeaderProps> = ({ variant = 'default', onDownload }) => {
     const checkUser = async () => {
       const { data: userData } = await supabase.auth.getUser();
       setIsLoggedIn(!!userData?.user);
+      setUser(userData?.user || null);
       setUserName(userData?.user?.user_metadata?.full_name || userData?.user?.email || null);
     };
     checkUser();
@@ -53,17 +57,22 @@ const Header: React.FC<HeaderProps> = ({ variant = 'default', onDownload }) => {
               <img src={logo} className="h-10" />
             </Link>
           </div>
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-4 items-center">
             <Button variant="outline">Upgrade</Button>
             {variant === 'resume-builder' && onDownload && (
               <Button variant="default" type="button" onClick={onDownload}>Download</Button>
             )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button>{userName}</Button>
+                <Avatar>
+                  <AvatarImage src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(user?.email || user?.id || 'guest')}`} />
+                  <AvatarFallback>{userName ? userName[0] : 'U'}</AvatarFallback>
+                </Avatar>
+                {/* <Button>{userName}</Button> */}
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-40 mt-2">
+
+                <DropdownMenuItem>My Account</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
               </DropdownMenuContent>

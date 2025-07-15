@@ -220,7 +220,7 @@ const LandingPage = () => {
             <DropdownMenuTrigger asChild>
               <Button>Create new</Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className='w-40 mt-2'>
               <DropdownMenuItem onClick={handleUploadClick}>Upload resume</DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/builder')}>Blank resume</DropdownMenuItem>
             </DropdownMenuContent>
