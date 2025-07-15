@@ -22,6 +22,7 @@ import { generateTailoredResumeWithGemini } from '@/lib/geminiClient';
 import { toast } from 'sonner';
 import { TextShimmer } from '@/components/ui/text-shimmer';
 import {MagneticButton} from '@/components/ui/magnetic-button';
+import mixpanel from 'mixpanel-browser';
 
 const emptyResume: ParsedResume = {
   fullName: '',
@@ -496,6 +497,7 @@ const ResumeBuilder = () => {
   // Handler for dialog submit
   const handleTailorSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    mixpanel.track('Tailor My Resume Clicked');
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
     const newJobDetails = {
