@@ -3,6 +3,7 @@ export interface ExperienceItem {
   company: string;
   title: string;
   period: string;
+  location?: string;
   description: string;
 }
 
@@ -10,6 +11,7 @@ export interface EducationItem {
   school: string;
   degree: string;
   period: string;
+  location?: string;
   description: string;
 }
 

@@ -17,7 +17,6 @@ import { Check, X, MoreVertical, Copy, Sparkles } from 'lucide-react';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import AISuggestionField from '@/components/ui/AISuggestionField';
 import type { AISuggestionFieldMode } from '@/components/ui/AISuggestionField';
-import { RainbowButton } from '@/components/ui/rainbow-button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { generateTailoredResumeWithGemini } from '@/lib/geminiClient';
@@ -85,10 +84,10 @@ const ResumeBuilder = () => {
       type: 'header',
       key: 'header',
       jsx: (
-        <div className="text-center mb-10">
-          <div className="text-2xl font-serif font-bold leading-tight">{resume.fullName || 'Full Name'}</div>
+        <div className="text-center mb-2">
+          <div className="text-3xl font-serif font-bold leading-tight">{resume.fullName || 'Full Name'}</div>
           <div className="text-md font-semibold mt-2 mb-2">{resume.jobTitle || 'Job Title'}</div>
-          <div className="text-sm text-gray-700 mt-2">
+          <div className="text-sm mt-2">
             {resume.location && <span>{resume.location} | </span>}
             {resume.email && <span>{resume.email} | </span>}
             {resume.portfolio && <span>{resume.portfolio} | </span>}
@@ -100,106 +99,111 @@ const ResumeBuilder = () => {
     // Summary
     if (resume.summary) {
       blocks.push({
-        type: 'section-heading',
+        type: 'summary',
         key: 'summary-section',
-        jsx: <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Summary</SectionHeading>
-      });
-      resume.summary.split(/\n+/).forEach((line, i) => {
-        blocks.push({
-          type: 'paragraph',
-          key: `summary-line-${i}`,
-          jsx: <div className="text-sm whitespace-pre-line" key={`summary-line-${i}`}>{line}</div>
-        });
+        jsx: (
+          <div>
+            <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Summary</SectionHeading>
+            <div className="text-sm whitespace-pre-line">{resume.summary}</div>
+          </div>
+        )
       });
     }
     // Work Experience
     const experienceArr = Array.isArray(resume.experience) ? resume.experience : [];
     if (experienceArr.length > 0) {
       blocks.push({
-        type: 'section-heading',
-        key: 'workexp-heading',
-        jsx: <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Work Experience</SectionHeading>
-      });
-      experienceArr.forEach((exp, idx) => {
-        blocks.push({
-          type: 'exp-header',
-          key: `exp-header-${idx}`,
-          jsx: <div className="font-bold text-sm">{exp.company} — {exp.title}</div>
-        });
-        if (exp.period) {
-          blocks.push({
-            type: 'exp-date',
-            key: `exp-date-${idx}`,
-            jsx: <div className="italic text-sm mb-1">{exp.period}</div>
-          });
-        }
-        if (exp.description) {
-          exp.description.split(/\n|•/).filter(Boolean).forEach((line, i) => {
-            blocks.push({
-              type: 'exp-bullet',
-              key: `exp-bullet-${idx}-${i}`,
-              jsx: <li className="break-words text-sm" key={`exp-bullet-${idx}-${i}`}>{line.trim()}</li>
-            });
-          });
-        }
+        type: 'work-experience',
+        key: 'workexp-section',
+        jsx: (
+          <div>
+            <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Work Experience</SectionHeading>
+            <div className="flex flex-col gap-3">
+              {experienceArr.map((exp, idx) => (
+                <div key={idx}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="font-bold text-sm">{exp.company} — {exp.title}</div>
+                    <div className="flex flex-col items-end min-w-[120px]">
+                      {exp.period && <div className="italic text-sm text-right whitespace-nowrap">{exp.period}</div>}
+                      {exp.location && <div className="text-sm text-right text-gray-700">{exp.location}</div>}
+                    </div>
+                  </div>
+                  {exp.description && exp.description.split(/\n|•/).filter(Boolean).map((line, i) => (
+                    <div key={i} className="break-words text-sm">{line.trim()}</div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        )
       });
     }
     // Education
     const educationArr = Array.isArray(resume.education) ? resume.education : [];
     if (educationArr.length > 0) {
       blocks.push({
-        type: 'section-heading',
-        key: 'edu-heading',
-        jsx: <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Education</SectionHeading>
-      });
-      educationArr.forEach((edu, idx) => {
-        blocks.push({
-          type: 'edu-header',
-          key: `edu-header-${idx}`,
-          jsx: <div className="font-bold text-base">{edu.school} — {edu.degree}</div>
-        });
-        if (edu.period) {
-          blocks.push({
-            type: 'edu-date',
-            key: `edu-date-${idx}`,
-            jsx: <div className="italic text-sm mb-1">{edu.period}</div>
-          });
-        }
-        if (edu.description) {
-          edu.description.split(/\n|•/).filter(Boolean).forEach((line, i) => {
-            blocks.push({
-              type: 'edu-bullet',
-              key: `edu-bullet-${idx}-${i}`,
-              jsx: <li className="break-words text-sm" key={`edu-bullet-${idx}-${i}`}>{line.trim()}</li>
-            });
-          });
-        }
+        type: 'education',
+        key: 'edu-section',
+        jsx: (
+          <div>
+            <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Education</SectionHeading>
+            <div className="flex flex-col gap-3">
+              {educationArr.map((edu, idx) => (
+                <div key={idx}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="font-bold text-base">{edu.school} — {edu.degree}</div>
+                    <div className="flex flex-col items-end min-w-[120px]">
+                      {edu.period && <div className="italic text-sm text-right whitespace-nowrap">{edu.period}</div>}
+                      {edu.location && <div className="text-sm text-right text-gray-700">{edu.location}</div>}
+                    </div>
+                  </div>
+                  {edu.description && edu.description.split(/\n|•/).filter(Boolean).map((line, i) => (
+                    <div key={i} className="break-words text-sm">{line.trim()}</div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        )
       });
     }
     // Skills
     if (resume.skills) {
       blocks.push({
-        type: 'section-heading',
+        type: 'skills',
         key: 'skills-section',
-        jsx: <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Skills</SectionHeading>
-      });
-      blocks.push({
-        type: 'paragraph',
-        key: 'skills-list',
-        jsx: <div className="text-base">{resume.skills}</div>
+        jsx: (
+          <div>
+            <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Skills</SectionHeading>
+            <div className="text-sm">{resume.skills}</div>
+          </div>
+        )
       });
     }
     // Tools
     if (resume.tools) {
       blocks.push({
-        type: 'section-heading',
+        type: 'tools',
         key: 'tools-section',
-        jsx: <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Tools</SectionHeading>
+        jsx: (
+          <div>
+            <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Tools</SectionHeading>
+            <div className="text-sm">{resume.tools}</div>
+          </div>
+        )
       });
+    }
+    // Languages
+    if (resume.languages) {
       blocks.push({
-        type: 'paragraph',
-        key: 'tools-list',
-        jsx: <div className="text-base">{resume.tools}</div>
+        type: 'languages',
+        key: 'languages-section',
+        jsx: (
+          <div>
+            <SectionHeading variant={isExportingPDF ? 'pdf' : 'preview'}>Languages</SectionHeading>
+            <div className="text-sm">{resume.languages}</div>
+          </div>
+        )
       });
     }
     return blocks;
@@ -220,14 +224,14 @@ const ResumeBuilder = () => {
         bulletBuffer.push(block.jsx);
       } else {
         if (bulletBuffer.length > 0) {
-          groupedBlocks.push({ jsx: <ul className="list-disc list-outside pl-6 text-sm break-words mb-2">{bulletBuffer}</ul>, isList: true, count: bulletBuffer.length });
+          groupedBlocks.push({ jsx: <ul className="list-none list-outside text-sm break-words mb-2">{bulletBuffer}</ul>, isList: true, count: bulletBuffer.length });
           bulletBuffer = [];
         }
         groupedBlocks.push({ jsx: block.jsx, isList: false, count: 1 });
       }
     });
     if (bulletBuffer.length > 0) {
-      groupedBlocks.push({ jsx: <ul className="list-disc list-outside pl-6 text-sm break-words mb-2">{bulletBuffer}</ul>, isList: true, count: bulletBuffer.length });
+      groupedBlocks.push({ jsx: <ul className="list-none list-outside pl text-sm break-words mb-2">{bulletBuffer}</ul>, isList: true, count: bulletBuffer.length });
     }
     // Render each group in the measuring container and measure its height
     const tempRefs: (HTMLDivElement | null)[] = [];
@@ -270,7 +274,7 @@ const ResumeBuilder = () => {
             // For simplicity, estimate each <li> as h / count
             const singleLiHeight = h / group.count;
             if (currentHeight + liHeight + singleLiHeight > 1056 && liBuffer.length > 0) {
-              tempPages[currentPage].push(<ul className="list-disc list-outside pl-6 text-sm break-words mb-2" key={`ul-split-${i}-${idx}`}>{liBuffer}</ul>);
+              tempPages[currentPage].push(<ul className="list-none list-outside text-sm break-words mb-2" key={`ul-split-${i}-${idx}`}>{liBuffer}</ul>);
               currentPage++;
               tempPages.push([]);
               liBuffer = [];
@@ -281,7 +285,7 @@ const ResumeBuilder = () => {
             liHeight += singleLiHeight;
           });
           if (liBuffer.length > 0) {
-            tempPages[currentPage].push(<ul className="list-disc list-outside pl-6 text-sm break-words mb-2" key={`ul-split-last-${i}`}>{liBuffer}</ul>);
+            tempPages[currentPage].push(<ul className="list-none list-outside text-sm break-words mb-2" key={`ul-split-last-${i}`}>{liBuffer}</ul>);
             currentHeight += liHeight;
           }
         } else {
@@ -327,12 +331,13 @@ const ResumeBuilder = () => {
       experience: prev.experience.map((exp, i) => i === idx ? { ...exp, [field]: value } : exp),
     }));
   };
+  // 1. Update experience and education entry structure to include 'location' field when adding new entries
   const handleAddExperience = () => {
     setResume(prev => ({
       ...prev,
       experience: [
         ...prev.experience,
-        { company: '', title: '', period: '', description: '' },
+        { company: '', title: '', period: '', location: '', description: '' },
       ],
     }));
   };
@@ -350,12 +355,13 @@ const ResumeBuilder = () => {
       education: prev.education.map((edu, i) => i === idx ? { ...edu, [field]: value } : edu),
     }));
   };
+  // 2. Update Editor layout for Experience
   const handleAddEducation = () => {
     setResume(prev => ({
       ...prev,
       education: [
         ...prev.education,
-        { school: '', degree: '', period: '', description: '' },
+        { school: '', degree: '', period: '', location: '', description: '' },
       ],
     }));
   };
@@ -558,7 +564,10 @@ const ResumeBuilder = () => {
                           <div className="flex gap-2 mb-2">
                             <Input className="flex-1" placeholder="Company" value={exp.company} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleExperienceChange(idx, 'company', e.target.value)} />
                             <Input className="flex-1" placeholder="Job title" value={exp.title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleExperienceChange(idx, 'title', e.target.value)} />
+                          </div>
+                          <div className="flex gap-2 mb-2">
                             <Input className="flex-1" placeholder="Period" value={exp.period} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleExperienceChange(idx, 'period', e.target.value)} />
+                            <Input className="flex-1" placeholder="Location" value={exp.location} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleExperienceChange(idx, 'location', e.target.value)} />
                           </div>
                           <Textarea
                             placeholder={`• Designed a marketing campaign that increased client engagement by 50%\n• Created over 100 graphic designs for various clients, maintaining a 95% client satisfaction rate\n• Revamped a major brand's visual identity, leading to a 30% increase in their social media following`}
@@ -591,7 +600,10 @@ const ResumeBuilder = () => {
                           <div className="flex gap-2 mb-2">
                             <Input className="flex-1" placeholder="School" value={edu.school} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEducationChange(idx, 'school', e.target.value)} />
                             <Input className="flex-1" placeholder="Degree" value={edu.degree} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEducationChange(idx, 'degree', e.target.value)} />
+                          </div>
+                          <div className="flex gap-2 mb-2">
                             <Input className="flex-1" placeholder="Period" value={edu.period} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEducationChange(idx, 'period', e.target.value)} />
+                            <Input className="flex-1" placeholder="Location" value={edu.location} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleEducationChange(idx, 'location', e.target.value)} />
                           </div>
                           <Textarea placeholder="Description" value={edu.description} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleEducationChange(idx, 'description', e.target.value)} rows={2} />
                         </div>
@@ -622,7 +634,7 @@ const ResumeBuilder = () => {
                   <img src="/assets/no-tailor-job.png" alt="Upload resume" className="w-40 h-40 text-muted-foreground" />
                   <h2 className="text-xl font-semibold mb-2">Tailor your resume to any job</h2>
                   <p className="text-muted-foreground mb-8">Add company name, job description, custom questions and AI will generate tailored resume for it.</p>
-                  <MagneticButton type="button" onClick={() => setDialogOpen(true)}>
+                  <MagneticButton onClick={() => setDialogOpen(true)}>
                     Add job details
                   </MagneticButton>
                 </div>
@@ -718,11 +730,13 @@ const ResumeBuilder = () => {
           >
             {pages.map((page, index) => (
               <div key={index} className="mb-8">
-                {page.map((block, blockIndex) => (
-                  <div key={`${index}-${blockIndex}`} className="mb-4">
-                    {block}
-                  </div>
-                ))}
+                <div className="flex flex-col gap-5">
+                  {page.map((block, blockIndex) => (
+                    <div key={`${index}-${blockIndex}`}> 
+                      {block}
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>

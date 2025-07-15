@@ -8,9 +8,10 @@ const SPRING_CONFIG = { damping: 100, stiffness: 400 };
 type MagneticButtonType = {
   children: React.ReactNode;
   distance?: number;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
 };
 
-function MagneticButton({ children, distance = 0.6 }: MagneticButtonType) {
+function MagneticButton({ children, distance = 0.6, onClick }: MagneticButtonType) {
   const [isHovered, setIsHovered] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -54,7 +55,12 @@ function MagneticButton({ children, distance = 0.6 }: MagneticButtonType) {
       style={{
         x: springX,
         y: springY
-      }}>
+      }}
+      onClick={onClick}
+      className={
+        'inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-white shadow-sm hover:bg-accent hover:text-accent-foreground px-4 py-2 cursor-pointer' // outline + base button styles
+      }
+    >
       {children}
     </motion.div>
   );
