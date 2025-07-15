@@ -12,7 +12,6 @@ import SectionHeading from '@/components/SectionHeading';
 import { supabase } from '../lib/supabaseClient';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { mockJobDetails, mockAISuggestions } from '../lib/mockTailorData';
 import { Check, X, MoreVertical, Copy, Sparkles } from 'lucide-react';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import AISuggestionField from '@/components/ui/AISuggestionField';
@@ -65,11 +64,11 @@ const ResumeBuilder = () => {
 
   const [showProcessing, setShowProcessing] = useState(false);
   const [showAISuggestions, setShowAISuggestions] = useState(false);
-  const [jobDetails, setJobDetails] = useState<any>(mockJobDetails);
+  const [jobDetails, setJobDetails] = useState<any>({});
   const getInitialAISuggestions = () => {
     const saved = localStorage.getItem('aiSuggestions');
     if (saved) return JSON.parse(saved);
-    return mockAISuggestions;
+    return {};
   };
   const [aiSuggestions, setAISuggestions] = useState<any>(getInitialAISuggestions());
   const [dialogOpen, setDialogOpen] = useState(false);
