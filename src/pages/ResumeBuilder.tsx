@@ -22,6 +22,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { generateTailoredResumeWithGemini } from '@/lib/geminiClient';
 import { toast } from 'sonner';
+import { TextShimmer } from '@/components/ui/text-shimmer';
+import {MagneticButton} from '@/components/ui/magnetic-button';
 
 const emptyResume: ParsedResume = {
   fullName: '',
@@ -65,7 +67,12 @@ const ResumeBuilder = () => {
   const [showProcessing, setShowProcessing] = useState(false);
   const [showAISuggestions, setShowAISuggestions] = useState(false);
   const [jobDetails, setJobDetails] = useState<any>(mockJobDetails);
-  const [aiSuggestions, setAISuggestions] = useState<any>(mockAISuggestions);
+  const getInitialAISuggestions = () => {
+    const saved = localStorage.getItem('aiSuggestions');
+    if (saved) return JSON.parse(saved);
+    return mockAISuggestions;
+  };
+  const [aiSuggestions, setAISuggestions] = useState<any>(getInitialAISuggestions());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [modalQuestions, setModalQuestions] = useState<string[]>(jobDetails.customQuestions || ['']);
 
@@ -417,8 +424,10 @@ const ResumeBuilder = () => {
   useEffect(() => {
     if (resumeData) {
       setResume(resumeData);
+      localStorage.removeItem('aiSuggestions');
     } else if (ocrText) {
       setResume(parseResumeText(ocrText));
+      localStorage.removeItem('aiSuggestions');
     }
   }, [resumeData, ocrText]);
 
@@ -476,7 +485,12 @@ const ResumeBuilder = () => {
 
   const handleEditJob = () => {
     setDialogOpen(true);
+    setJobDetails((prev: any) => ({ ...prev, generateCoverLetter: false }));
   };
+
+  useEffect(() => {
+    localStorage.setItem('aiSuggestions', JSON.stringify(aiSuggestions));
+  }, [aiSuggestions]);
 
   return (
     <>
@@ -608,9 +622,9 @@ const ResumeBuilder = () => {
                   <img src="/assets/no-tailor-job.png" alt="Upload resume" className="w-40 h-40 text-muted-foreground" />
                   <h2 className="text-xl font-semibold mb-2">Tailor your resume to any job</h2>
                   <p className="text-muted-foreground mb-8">Add company name, job description, custom questions and AI will generate tailored resume for it.</p>
-                  <RainbowButton type="button" onClick={() => setDialogOpen(true)}>
+                  <MagneticButton type="button" onClick={() => setDialogOpen(true)}>
                     Add job details
-                  </RainbowButton>
+                  </MagneticButton>
                 </div>
               )}
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -661,7 +675,7 @@ const ResumeBuilder = () => {
                         <Checkbox
                           id="cover-letter"
                           name="coverLetter"
-                          defaultChecked={jobDetails.generateCoverLetter}
+                          defaultChecked={false}
                           className="data-[state=checked]:border-slate-900 data-[state=checked]:bg-slate-900 data-[state=checked]:text-white dark:data-[state=checked]:border-bl-slate-700 dark:data-[state=checked]:bg-bl-slate-700 transition-colors duration-150"
                         />
                         <div className="grid gap-1.5 font-normal">
@@ -801,6 +815,7 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     try {
       const newSuggestions = await generateTailoredResumeWithGemini({ resume, jobDetails, apiKey });
+      console.log('New AI suggestions:', newSuggestions);
       if (sectionKey === 'summary') {
         setAISuggestions((prev: any) => ({ ...prev, summary: newSuggestions.summary }));
       } else if (sectionKey.startsWith('work-')) {
@@ -817,12 +832,20 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
         setAISuggestions((prev: any) => ({ ...prev, education: newSuggestions.education }));
       } else if (sectionKey.startsWith('custom-question-')) {
         const i = idx ?? parseInt(sectionKey.split('-')[2], 10);
-        setAISuggestions((prev: any) => ({
-          ...prev,
-          customQuestionAnswers: prev.customQuestionAnswers.map((a: string, j: number) => (j === i ? newSuggestions.customQuestionAnswers[i] : a)),
-        }));
+        if (newSuggestions.customQuestionAnswers && newSuggestions.customQuestionAnswers[i]) {
+          setAISuggestions((prev: any) => ({
+            ...prev,
+            customQuestionAnswers: prev.customQuestionAnswers.map((a: string, j: number) => (j === i ? newSuggestions.customQuestionAnswers[i] : a)),
+          }));
+        } else {
+          console.warn('No customQuestionAnswers returned for regenerate:', newSuggestions);
+        }
       } else if (sectionKey === 'cover-letter') {
-        setAISuggestions((prev: any) => ({ ...prev, coverLetter: newSuggestions.coverLetter }));
+        if (newSuggestions.coverLetter) {
+          setAISuggestions((prev: any) => ({ ...prev, coverLetter: newSuggestions.coverLetter }));
+        } else {
+          console.warn('No coverLetter returned for regenerate:', newSuggestions);
+        }
       }
     } catch (e) {
       alert('Failed to regenerate suggestion.');
@@ -837,7 +860,6 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
     (aiSuggestions.tools && aiSuggestions.tools.trim()) ||
     (aiSuggestions.education && aiSuggestions.education.trim())
   );
-  if (!hasAISuggestions) return null;
   return (
     <div className="w-full mx-auto rounded-xl">
       <div className="flex items-center justify-between mb-4 border rounded-lg border-slate-200 p-2">
@@ -866,7 +888,7 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
                     onDecline={() => handleDecline('summary')}
                     onRegenerate={() => handleRegenerate('summary')}
                   >
-                    {regenerating === 'summary' ? 'Regenerating...' : aiSuggestions.summary}
+                    {regenerating === 'summary' ? <TextShimmer>Regenerating...</TextShimmer> : aiSuggestions.summary}
                   </AISuggestionField>
                 </div>
               )}
@@ -885,10 +907,10 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
                         onDecline={() => handleDecline(`work-${i}`, i)}
                         onRegenerate={() => handleRegenerate(`work-${i}`, i)}
                       >
-                        {regenerating === `work-${i}` ? 'Regenerating...' : (
+                        {regenerating === `work-${i}` ? <TextShimmer>Regenerating...</TextShimmer> : (
                           <div className="w-full">
                             <div className="font-medium">{exp.company} — {exp.title}</div>
-                            <div className="text-xs text-gray-500 mb-1">{exp.date}</div>
+                            {/* Date removed as requested */}
                             <ul className="list-disc pl-5">
                               {exp.bullets.map((b: string, j: number) => <li key={j}>{b}</li>)}
                             </ul>
@@ -912,7 +934,7 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
                     onDecline={() => handleDecline('education')}
                     onRegenerate={() => handleRegenerate('education')}
                   >
-                    {regenerating === 'education' ? 'Regenerating...' : aiSuggestions.education}
+                    {regenerating === 'education' ? <TextShimmer>Regenerating...</TextShimmer> : aiSuggestions.education}
                   </AISuggestionField>
                 </div>
               )}
@@ -929,7 +951,7 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
                     onDecline={() => handleDecline('skills')}
                     onRegenerate={() => handleRegenerate('skills')}
                   >
-                    {regenerating === 'skills' ? 'Regenerating...' : aiSuggestions.skills}
+                    {regenerating === 'skills' ? <TextShimmer>Regenerating...</TextShimmer> : aiSuggestions.skills}
                   </AISuggestionField>
                 </div>
               )}
@@ -946,7 +968,7 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
                     onDecline={() => handleDecline('tools')}
                     onRegenerate={() => handleRegenerate('tools')}
                   >
-                    {regenerating === 'tools' ? 'Regenerating...' : aiSuggestions.tools}
+                    {regenerating === 'tools' ? <TextShimmer>Regenerating...</TextShimmer> : aiSuggestions.tools}
                   </AISuggestionField>
                 </div>
               )}
@@ -969,7 +991,7 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
                     onCopy={() => handleCopy(aiSuggestions.customQuestionAnswers[idx])}
                     onRegenerate={() => handleRegenerate(`custom-question-${idx}`, idx)}
                   >
-                    {regenerating === `custom-question-${idx}` ? 'Regenerating...' : aiSuggestions.customQuestionAnswers[idx]}
+                    {regenerating === `custom-question-${idx}` ? <TextShimmer>Regenerating...</TextShimmer> : aiSuggestions.customQuestionAnswers[idx]}
                   </AISuggestionField>
                 </div>
               ))}
@@ -989,7 +1011,7 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
                 onCopy={() => handleCopy(aiSuggestions.coverLetter)}
                 onRegenerate={() => handleRegenerate('cover-letter')}
               >
-                {regenerating === 'cover-letter' ? 'Regenerating...' : <div className="whitespace-pre-line">{aiSuggestions.coverLetter}</div>}
+                {regenerating === 'cover-letter' ? <TextShimmer>Regenerating...</TextShimmer> : <div className="whitespace-pre-line">{aiSuggestions.coverLetter}</div>}
               </AISuggestionField>
             </AccordionContent>
           </AccordionItem>

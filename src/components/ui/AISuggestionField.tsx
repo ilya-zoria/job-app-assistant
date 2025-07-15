@@ -35,7 +35,7 @@ const AISuggestionField: React.FC<AISuggestionFieldProps> = ({
     >
       <span className="w-full">{children}</span>
       {hoveredSection === sectionKey && (
-        <div className="absolute top-2 right-2 flex gap-2 z-50 transition-colors duration-150">
+        <div className="absolute top-1 right-1 flex gap-1 z-50 transition-colors duration-150">
           {mode === 'ai' ? (
             <>
               <Button variant="outline" size="icon" className="size-8 transition-colors duration-150 group" onClick={onAccept}><Check size={18} className="text-slate-500 group-hover:text-slate-900" /></Button>
@@ -45,7 +45,7 @@ const AISuggestionField: React.FC<AISuggestionFieldProps> = ({
           ) : (
             <>
               <Button variant="outline" size="icon" className="size-8 transition-colors duration-150 group" onClick={onCopy}><Copy size={18} className="text-slate-500 group-hover:text-slate-900" /></Button>
-              <Button variant="outline" size="icon" className="size-8 transition-colors duration-150 group"><Sparkles size={18} className="text-slate-500 group-hover:text-slate-900" /></Button>
+              <Button variant="outline" size="icon" className="size-8 transition-colors duration-150 group" onClick={onRegenerate}><Sparkles size={18} className="text-slate-500 group-hover:text-slate-900" /></Button>
             </>
           )}
         </div>
