@@ -11,6 +11,9 @@ interface AISuggestionFieldProps {
   children: React.ReactNode;
   mode?: AISuggestionFieldMode;
   onCopy?: () => void;
+  onAccept?: () => void;
+  onDecline?: () => void;
+  onRegenerate?: () => void;
 }
 
 const AISuggestionField: React.FC<AISuggestionFieldProps> = ({
@@ -20,6 +23,9 @@ const AISuggestionField: React.FC<AISuggestionFieldProps> = ({
   children,
   mode = 'ai',
   onCopy,
+  onAccept,
+  onDecline,
+  onRegenerate,
 }) => {
   return (
     <div
@@ -32,9 +38,9 @@ const AISuggestionField: React.FC<AISuggestionFieldProps> = ({
         <div className="absolute top-2 right-2 flex gap-2 z-50 transition-colors duration-150">
           {mode === 'ai' ? (
             <>
-              <Button variant="outline" size="icon" className="size-8 transition-colors duration-150 group"><Check size={18} className="text-slate-500 group-hover:text-slate-900" /></Button>
-              <Button variant="outline" size="icon" className="size-8 transition-colors duration-150 group"><X size={18} className="text-slate-500 group-hover:text-slate-900" /></Button>
-              <Button variant="outline" size="icon" className="size-8 transition-colors duration-150 group"><Sparkles size={18} className="text-slate-500 group-hover:text-slate-900" /></Button>
+              <Button variant="outline" size="icon" className="size-8 transition-colors duration-150 group" onClick={onAccept}><Check size={18} className="text-slate-500 group-hover:text-slate-900" /></Button>
+              <Button variant="outline" size="icon" className="size-8 transition-colors duration-150 group" onClick={onDecline}><X size={18} className="text-slate-500 group-hover:text-slate-900" /></Button>
+              <Button variant="outline" size="icon" className="size-8 transition-colors duration-150 group" onClick={onRegenerate}><Sparkles size={18} className="text-slate-500 group-hover:text-slate-900" /></Button>
             </>
           ) : (
             <>

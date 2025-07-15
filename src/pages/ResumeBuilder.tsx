@@ -21,6 +21,7 @@ import { RainbowButton } from '@/components/ui/rainbow-button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { generateTailoredResumeWithGemini } from '@/lib/geminiClient';
+import { toast } from 'sonner';
 
 const emptyResume: ParsedResume = {
   fullName: '',
@@ -601,7 +602,7 @@ const ResumeBuilder = () => {
             </TabsContent>
             <TabsContent value="tailor">
               {showAISuggestions ? (
-                <TailoredAISuggestions jobDetails={jobDetails} aiSuggestions={aiSuggestions} onEditJob={handleEditJob} hoveredSection={hoveredSection} setHoveredSection={setHoveredSection} />
+                <TailoredAISuggestions jobDetails={jobDetails} aiSuggestions={aiSuggestions} onEditJob={handleEditJob} hoveredSection={hoveredSection} setHoveredSection={setHoveredSection} resume={resume} setResume={setResume} setAISuggestions={setAISuggestions} />
               ) : (
                 <div className="flex flex-col items-center mx-auto text-center justify-center h-full w-full max-w-[380px] my-16">
                   <img src="/assets/no-tailor-job.png" alt="Upload resume" className="w-40 h-40 text-muted-foreground" />
@@ -717,11 +718,126 @@ const ResumeBuilder = () => {
   );
 };
 
-function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSection, setHoveredSection }: any) {
-  // Copy handler
+function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSection, setHoveredSection, resume, setResume, setAISuggestions }: any) {
+  const [regenerating, setRegenerating] = React.useState<string | null>(null);
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
+    toast.success('Copied to clipboard!');
   };
+  // Accept handler
+  const handleAccept = (sectionKey: string, idx?: number) => {
+    if (sectionKey === 'summary') {
+      setResume((prev: any) => ({ ...prev, summary: aiSuggestions.summary }));
+      setAISuggestions((prev: any) => ({ ...prev, summary: undefined }));
+    } else if (sectionKey.startsWith('work-')) {
+      const i = idx ?? parseInt(sectionKey.split('-')[1], 10);
+      setResume((prev: any) => ({
+        ...prev,
+        experience: prev.experience.map((exp: any, j: number) =>
+          j === i
+            ? {
+                ...exp,
+                company: aiSuggestions.workExperience[i].company,
+                title: aiSuggestions.workExperience[i].title,
+                period: aiSuggestions.workExperience[i].date,
+                description: aiSuggestions.workExperience[i].bullets.join('\n'),
+              }
+            : exp
+        ),
+      }));
+      setAISuggestions((prev: any) => ({
+        ...prev,
+        workExperience: prev.workExperience.filter((_: any, j: number) => j !== i),
+      }));
+    } else if (sectionKey === 'skills') {
+      setResume((prev: any) => ({ ...prev, skills: aiSuggestions.skills }));
+      setAISuggestions((prev: any) => ({ ...prev, skills: undefined }));
+    } else if (sectionKey === 'tools') {
+      setResume((prev: any) => ({ ...prev, tools: aiSuggestions.tools }));
+      setAISuggestions((prev: any) => ({ ...prev, tools: undefined }));
+    } else if (sectionKey === 'education') {
+      setResume((prev: any) => ({ ...prev, education: aiSuggestions.education }));
+      setAISuggestions((prev: any) => ({ ...prev, education: undefined }));
+    } else if (sectionKey.startsWith('custom-question-')) {
+      const i = idx ?? parseInt(sectionKey.split('-')[2], 10);
+      // Accept: copy to clipboard and remove suggestion
+      handleCopy(aiSuggestions.customQuestionAnswers[i]);
+      setAISuggestions((prev: any) => ({
+        ...prev,
+        customQuestionAnswers: prev.customQuestionAnswers.map((a: string, j: number) => (j === i ? undefined : a)),
+      }));
+    } else if (sectionKey === 'cover-letter') {
+      handleCopy(aiSuggestions.coverLetter);
+      setAISuggestions((prev: any) => ({ ...prev, coverLetter: undefined }));
+    }
+  };
+  const handleDecline = (sectionKey: string, idx?: number) => {
+    if (sectionKey === 'summary') {
+      setAISuggestions((prev: any) => ({ ...prev, summary: undefined }));
+    } else if (sectionKey.startsWith('work-')) {
+      const i = idx ?? parseInt(sectionKey.split('-')[1], 10);
+      setAISuggestions((prev: any) => ({
+        ...prev,
+        workExperience: prev.workExperience.filter((_: any, j: number) => j !== i),
+      }));
+    } else if (sectionKey === 'skills') {
+      setAISuggestions((prev: any) => ({ ...prev, skills: undefined }));
+    } else if (sectionKey === 'tools') {
+      setAISuggestions((prev: any) => ({ ...prev, tools: undefined }));
+    } else if (sectionKey === 'education') {
+      setAISuggestions((prev: any) => ({ ...prev, education: undefined }));
+    } else if (sectionKey.startsWith('custom-question-')) {
+      const i = idx ?? parseInt(sectionKey.split('-')[2], 10);
+      setAISuggestions((prev: any) => ({
+        ...prev,
+        customQuestionAnswers: prev.customQuestionAnswers.map((a: string, j: number) => (j === i ? undefined : a)),
+      }));
+    } else if (sectionKey === 'cover-letter') {
+      setAISuggestions((prev: any) => ({ ...prev, coverLetter: undefined }));
+    }
+  };
+  const handleRegenerate = async (sectionKey: string, idx?: number) => {
+    setRegenerating(sectionKey);
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    try {
+      const newSuggestions = await generateTailoredResumeWithGemini({ resume, jobDetails, apiKey });
+      if (sectionKey === 'summary') {
+        setAISuggestions((prev: any) => ({ ...prev, summary: newSuggestions.summary }));
+      } else if (sectionKey.startsWith('work-')) {
+        const i = idx ?? parseInt(sectionKey.split('-')[1], 10);
+        setAISuggestions((prev: any) => ({
+          ...prev,
+          workExperience: prev.workExperience.map((w: any, j: number) => (j === i ? newSuggestions.workExperience[i] : w)),
+        }));
+      } else if (sectionKey === 'skills') {
+        setAISuggestions((prev: any) => ({ ...prev, skills: newSuggestions.skills }));
+      } else if (sectionKey === 'tools') {
+        setAISuggestions((prev: any) => ({ ...prev, tools: newSuggestions.tools }));
+      } else if (sectionKey === 'education') {
+        setAISuggestions((prev: any) => ({ ...prev, education: newSuggestions.education }));
+      } else if (sectionKey.startsWith('custom-question-')) {
+        const i = idx ?? parseInt(sectionKey.split('-')[2], 10);
+        setAISuggestions((prev: any) => ({
+          ...prev,
+          customQuestionAnswers: prev.customQuestionAnswers.map((a: string, j: number) => (j === i ? newSuggestions.customQuestionAnswers[i] : a)),
+        }));
+      } else if (sectionKey === 'cover-letter') {
+        setAISuggestions((prev: any) => ({ ...prev, coverLetter: newSuggestions.coverLetter }));
+      }
+    } catch (e) {
+      alert('Failed to regenerate suggestion.');
+    } finally {
+      setRegenerating(null);
+    }
+  };
+  const hasAISuggestions = Boolean(
+    (aiSuggestions.summary && aiSuggestions.summary.trim()) ||
+    (aiSuggestions.workExperience && aiSuggestions.workExperience.length > 0) ||
+    (aiSuggestions.skills && aiSuggestions.skills.trim()) ||
+    (aiSuggestions.tools && aiSuggestions.tools.trim()) ||
+    (aiSuggestions.education && aiSuggestions.education.trim())
+  );
+  if (!hasAISuggestions) return null;
   return (
     <div className="w-full mx-auto rounded-xl">
       <div className="flex items-center justify-between mb-4 border rounded-lg border-slate-200 p-2">
@@ -733,62 +849,112 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
       </div>
       <Accordion type="multiple" className="w-full">
         {/* AI Suggestions Section */}
-        <AccordionItem value="ai-suggestions">
-          <AccordionTrigger>AI suggestions</AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-4">
-            {/* Summary */}
-            <div>
-              <div className="font-semibold mb-2">Summary</div>
-              <AISuggestionField sectionKey="summary" hoveredSection={hoveredSection} setHoveredSection={setHoveredSection} mode="ai">
-                {aiSuggestions.summary}
-              </AISuggestionField>
-            </div>
-            {/* Work Experience */}
-            <div>
-              <div className="font-semibold mb-2">Work experience</div>
-              {aiSuggestions.workExperience?.map((exp: any, i: number) => (
-                <div key={i} className="mb-3">
-                  <AISuggestionField sectionKey={`work-${i}`} hoveredSection={hoveredSection} setHoveredSection={setHoveredSection} mode="ai">
-                    <div className="w-full">
-                      <div className="font-medium">{exp.company} — {exp.title}</div>
-                      <div className="text-xs text-gray-500 mb-1">{exp.date}</div>
-                      <ul className="list-disc pl-5">
-                        {exp.bullets.map((b: string, j: number) => <li key={j}>{b}</li>)}
-                      </ul>
-                    </div>
+        {hasAISuggestions && (
+          <AccordionItem value="ai-suggestions">
+            <AccordionTrigger>AI suggestions</AccordionTrigger>
+            <AccordionContent className="flex flex-col gap-4">
+              {/* Summary */}
+              {aiSuggestions.summary && (
+                <div>
+                  <div className="font-semibold mb-2">Summary</div>
+                  <AISuggestionField
+                    sectionKey="summary"
+                    hoveredSection={hoveredSection}
+                    setHoveredSection={setHoveredSection}
+                    mode="ai"
+                    onAccept={() => handleAccept('summary')}
+                    onDecline={() => handleDecline('summary')}
+                    onRegenerate={() => handleRegenerate('summary')}
+                  >
+                    {regenerating === 'summary' ? 'Regenerating...' : aiSuggestions.summary}
                   </AISuggestionField>
                 </div>
-              ))}
-            </div>
-            {/* Skills */}
-            <div>
-              <div className="font-semibold mb-2">Skills</div>
-              <AISuggestionField sectionKey="skills" hoveredSection={hoveredSection} setHoveredSection={setHoveredSection} mode="ai">
-                {aiSuggestions.skills}
-              </AISuggestionField>
-            </div>
-            {/* Tools */}
-            {aiSuggestions.tools && (
-              <div>
-                <div className="font-semibold mb-2">Tools</div>
-                <AISuggestionField sectionKey="tools" hoveredSection={hoveredSection} setHoveredSection={setHoveredSection} mode="ai">
-                  {aiSuggestions.tools}
-                </AISuggestionField>
-              </div>
-            )}
-            {/* Education */}
-            {aiSuggestions.education && (
-              <div>
-                <div className="font-semibold mb-2">Education</div>
-                <AISuggestionField sectionKey="education" hoveredSection={hoveredSection} setHoveredSection={setHoveredSection} mode="ai">
-                  {aiSuggestions.education}
-                </AISuggestionField>
-              </div>
-            )}
-          </AccordionContent>
-        </AccordionItem>
+              )}
+              {/* Work Experience */}
+              {aiSuggestions.workExperience && aiSuggestions.workExperience.length > 0 && (
+                <div>
+                  <div className="font-semibold mb-2">Work experience</div>
+                  {aiSuggestions.workExperience.map((exp: any, i: number) => (
+                    <div key={i} className="mb-3">
+                      <AISuggestionField
+                        sectionKey={`work-${i}`}
+                        hoveredSection={hoveredSection}
+                        setHoveredSection={setHoveredSection}
+                        mode="ai"
+                        onAccept={() => handleAccept(`work-${i}`, i)}
+                        onDecline={() => handleDecline(`work-${i}`, i)}
+                        onRegenerate={() => handleRegenerate(`work-${i}`, i)}
+                      >
+                        {regenerating === `work-${i}` ? 'Regenerating...' : (
+                          <div className="w-full">
+                            <div className="font-medium">{exp.company} — {exp.title}</div>
+                            <div className="text-xs text-gray-500 mb-1">{exp.date}</div>
+                            <ul className="list-disc pl-5">
+                              {exp.bullets.map((b: string, j: number) => <li key={j}>{b}</li>)}
+                            </ul>
+                          </div>
+                        )}
+                      </AISuggestionField>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Education */}
+              {aiSuggestions.education && (
+                <div>
+                  <div className="font-semibold mb-2">Education</div>
+                  <AISuggestionField
+                    sectionKey="education"
+                    hoveredSection={hoveredSection}
+                    setHoveredSection={setHoveredSection}
+                    mode="ai"
+                    onAccept={() => handleAccept('education')}
+                    onDecline={() => handleDecline('education')}
+                    onRegenerate={() => handleRegenerate('education')}
+                  >
+                    {regenerating === 'education' ? 'Regenerating...' : aiSuggestions.education}
+                  </AISuggestionField>
+                </div>
+              )}
+              {/* Skills */}
+              {aiSuggestions.skills && (
+                <div>
+                  <div className="font-semibold mb-2">Skills</div>
+                  <AISuggestionField
+                    sectionKey="skills"
+                    hoveredSection={hoveredSection}
+                    setHoveredSection={setHoveredSection}
+                    mode="ai"
+                    onAccept={() => handleAccept('skills')}
+                    onDecline={() => handleDecline('skills')}
+                    onRegenerate={() => handleRegenerate('skills')}
+                  >
+                    {regenerating === 'skills' ? 'Regenerating...' : aiSuggestions.skills}
+                  </AISuggestionField>
+                </div>
+              )}
+              {/* Tools */}
+              {aiSuggestions.tools && (
+                <div>
+                  <div className="font-semibold mb-2">Tools</div>
+                  <AISuggestionField
+                    sectionKey="tools"
+                    hoveredSection={hoveredSection}
+                    setHoveredSection={setHoveredSection}
+                    mode="ai"
+                    onAccept={() => handleAccept('tools')}
+                    onDecline={() => handleDecline('tools')}
+                    onRegenerate={() => handleRegenerate('tools')}
+                  >
+                    {regenerating === 'tools' ? 'Regenerating...' : aiSuggestions.tools}
+                  </AISuggestionField>
+                </div>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        )}
         {/* Custom Questions Section */}
-        {jobDetails.customQuestions && jobDetails.customQuestions.length > 0 && (
+        {jobDetails.customQuestions && jobDetails.customQuestions.length > 0 && aiSuggestions.customQuestionAnswers && aiSuggestions.customQuestionAnswers.length > 0 && (
           <AccordionItem value="custom-questions">
             <AccordionTrigger>Custom questions</AccordionTrigger>
             <AccordionContent>
@@ -800,9 +966,10 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
                     hoveredSection={hoveredSection}
                     setHoveredSection={setHoveredSection}
                     mode="copy"
-                    onCopy={() => handleCopy(`I have solid hands-on experience conducting user research and validation throughout the product design process. I've planned and run user interviews, usability tests, and prototype validation sessions to understand user needs and validate key flows or concepts. I often collaborate with PMs or UX researchers but can also lead lean research myself — from creating scripts to synthesizing insights. At Brainly, for example, I interviewed ~20 students and ran usability tests to improve an AI learning companion. This helped uncover critical friction points and led to measurable increases in engagement. I regularly use tools like Maze, Hotjar, and Figma prototypes to gather feedback efficiently.`)}
+                    onCopy={() => handleCopy(aiSuggestions.customQuestionAnswers[idx])}
+                    onRegenerate={() => handleRegenerate(`custom-question-${idx}`, idx)}
                   >
-                    I have solid hands-on experience conducting user research and validation throughout the product design process. I've planned and run user interviews, usability tests, and prototype validation sessions to understand user needs and validate key flows or concepts. I often collaborate with PMs or UX researchers but can also lead lean research myself — from creating scripts to synthesizing insights. At Brainly, for example, I interviewed ~20 students and ran usability tests to improve an AI learning companion. This helped uncover critical friction points and led to measurable increases in engagement. I regularly use tools like Maze, Hotjar, and Figma prototypes to gather feedback efficiently.
+                    {regenerating === `custom-question-${idx}` ? 'Regenerating...' : aiSuggestions.customQuestionAnswers[idx]}
                   </AISuggestionField>
                 </div>
               ))}
@@ -820,8 +987,9 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
                 setHoveredSection={setHoveredSection}
                 mode="copy"
                 onCopy={() => handleCopy(aiSuggestions.coverLetter)}
+                onRegenerate={() => handleRegenerate('cover-letter')}
               >
-                <div className="whitespace-pre-line">{aiSuggestions.coverLetter}</div>
+                {regenerating === 'cover-letter' ? 'Regenerating...' : <div className="whitespace-pre-line">{aiSuggestions.coverLetter}</div>}
               </AISuggestionField>
             </AccordionContent>
           </AccordionItem>
