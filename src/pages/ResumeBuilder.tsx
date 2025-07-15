@@ -540,15 +540,15 @@ const ResumeBuilder = () => {
         {/* Left: Tabs and Editor/Tailor content */}
         <div className="flex-1 min-w-[350px] max-w-[700px] bg-white rounded-xl p-8 h-full max-h-screen overflow-y-auto mb-8">
           <Tabs defaultValue="editor" className="w-auto">
-            <TabsList className="w-auto flex mb-8">
+            <TabsList className="w-auto flex mb-6">
               <TabsTrigger value="editor" className="flex-1">Editor</TabsTrigger>
               <TabsTrigger value="tailor" className="flex-1">Tailor for job</TabsTrigger>
             </TabsList>
             <TabsContent value="editor">
-              <div className="flex flex-col md:flex-row gap-8">
-                {/* Left: Editable fields */}
-                <div className="flex-1 bg min-w-[350px] h-full max-h-screen mb-8">
-                  <div className="flex flex-col gap-4">
+              <Accordion type="multiple" className="w-full">
+                <AccordionItem value="personal-info">
+                  <AccordionTrigger>Personal Info</AccordionTrigger>
+                  <AccordionContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm mb-1">Full name</label>
@@ -567,7 +567,7 @@ const ResumeBuilder = () => {
                         <Input value={resume.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('email', e.target.value)} placeholder="tom_smith@gmail.com" />
                       </div>
                       <div>
-                        <label className="block text-sm mb-1">Portfolio</label>
+                        <label className="block text-sm mb-1">Personal website</label>
                         <Input value={resume.portfolio} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('portfolio', e.target.value)} placeholder="tomsmith.com" />
                       </div>
                       <div>
@@ -575,13 +575,21 @@ const ResumeBuilder = () => {
                         <Input value={resume.linkedin} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('linkedin', e.target.value)} placeholder="linkedin.com/in/tom-smith" />
                       </div>
                     </div>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="summary">
+                  <AccordionTrigger>Summary</AccordionTrigger>
+                  <AccordionContent>
                     <div>
-                      <label className="block text-sm mb-1">Summary</label>
                       <Textarea value={resume.summary} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleChange('summary', e.target.value)} rows={3} />
                       <div className="text-xs text-muted-foreground mt-1">Leave empty if you don't want to include it in the resume</div>
                     </div>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="experience">
+                  <AccordionTrigger>Experience</AccordionTrigger>
+                  <AccordionContent>
                     <div>
-                      <label className="block text-sm mb-1">Experience</label>
                       {(Array.isArray(resume.experience) ? resume.experience : []).map((exp, idx) => (
                         <div key={idx} className="mb-3 p-3 rounded-lg border border-border relative">
                           {/* Remove button in top-right */}
@@ -609,15 +617,16 @@ const ResumeBuilder = () => {
                             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleExperienceChange(idx, 'description', e.target.value)}
                             rows={2}
                           />
-                          {/* <div className="text-xs text-muted-foreground mt-1">
-                            Each line will appear as a bullet point in your resume.
-                          </div> */}
                         </div>
                       ))}
                       <Button variant="outline" onClick={handleAddExperience}>Add experience</Button>
                     </div>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="education">
+                  <AccordionTrigger>Education</AccordionTrigger>
+                  <AccordionContent>
                     <div>
-                      <label className="block text-sm mb-1">Education</label>
                       {(Array.isArray(resume.education) ? resume.education : []).map((edu, idx) => (
                         <div key={idx} className="mb-3 p-3 rounded-lg border border-border relative">
                           {/* Remove button in top-right */}
@@ -644,21 +653,33 @@ const ResumeBuilder = () => {
                       ))}
                       <Button variant="outline" onClick={handleAddEducation}>Add education</Button>
                     </div>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="skills">
+                  <AccordionTrigger>Skills</AccordionTrigger>
+                  <AccordionContent>
                     <div>
-                      <label className="block text-sm mb-1">Skills</label>
                       <Input value={resume.skills} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleListChange('skills', e.target.value)} placeholder="Product design, HTML, CSS, User research" />
                     </div>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="tools">
+                  <AccordionTrigger>Tools</AccordionTrigger>
+                  <AccordionContent>
                     <div>
-                      <label className="block text-sm mb-1">Tools</label>
                       <Input value={resume.tools} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleListChange('tools', e.target.value)} placeholder="Figma, Cursor, Framer, Notion" />
                     </div>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="languages">
+                  <AccordionTrigger>Languages</AccordionTrigger>
+                  <AccordionContent>
                     <div>
-                      <label className="block text-sm mb-1">Languages</label>
                       <Input value={resume.languages} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleListChange('languages', e.target.value)} placeholder="English, Ukrainian, Spanish" />
                     </div>
-                  </div>
-                </div>
-              </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </TabsContent>
             <TabsContent value="tailor">
               {showAISuggestions ? (
