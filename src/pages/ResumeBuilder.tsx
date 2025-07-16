@@ -360,7 +360,7 @@ const ResumeBuilder = () => {
 
   // Handlers for updating fields
   const handleChange = (field: keyof ParsedResume, value: string) => {
-    setResume(prev => ({ ...prev, [field]: value }));
+    setResume(prev => ({ ...prev, [field]: value, lastModified: new Date().toISOString() }));
   };
 
   // Experience handlers
@@ -368,6 +368,7 @@ const ResumeBuilder = () => {
     setResume(prev => ({
       ...prev,
       experience: prev.experience.map((exp, i) => i === idx ? { ...exp, [field]: value } : exp),
+      lastModified: new Date().toISOString(),
     }));
   };
   // 1. Update experience and education entry structure to include 'location' field when adding new entries
@@ -378,12 +379,14 @@ const ResumeBuilder = () => {
         ...prev.experience,
         { company: '', title: '', period: '', location: '', description: '' },
       ],
+      lastModified: new Date().toISOString(),
     }));
   };
   const handleRemoveExperience = (idx: number) => {
     setResume(prev => ({
       ...prev,
       experience: prev.experience.filter((_, i) => i !== idx),
+      lastModified: new Date().toISOString(),
     }));
   };
 
@@ -392,6 +395,7 @@ const ResumeBuilder = () => {
     setResume(prev => ({
       ...prev,
       education: prev.education.map((edu, i) => i === idx ? { ...edu, [field]: value } : edu),
+      lastModified: new Date().toISOString(),
     }));
   };
   // 2. Update Editor layout for Experience
@@ -402,18 +406,20 @@ const ResumeBuilder = () => {
         ...prev.education,
         { school: '', degree: '', period: '', location: '', description: '' },
       ],
+      lastModified: new Date().toISOString(),
     }));
   };
   const handleRemoveEducation = (idx: number) => {
     setResume(prev => ({
       ...prev,
       education: prev.education.filter((_, i) => i !== idx),
+      lastModified: new Date().toISOString(),
     }));
   };
 
   // Skills/tools handlers
   const handleListChange = (field: 'skills' | 'tools' | 'languages', value: string) => {
-    setResume(prev => ({ ...prev, [field]: value }));
+    setResume(prev => ({ ...prev, [field]: value, lastModified: new Date().toISOString() }));
   };
 
   const handleDownloadPDF = async () => {

@@ -1,4 +1,5 @@
 import React, { useCallback, useState, useEffect, useRef } from 'react';
+import ResumeCard from '@/components/ResumeCard';
 import { useDropzone } from 'react-dropzone';
 import Tesseract from 'tesseract.js';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +10,14 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 // @ts-ignore
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?worker&url';
@@ -16,26 +25,9 @@ import { supabase } from '../lib/supabaseClient';
 import { Download, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { parseResumeText } from '../lib/parseResumeText';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
-
-function ResumeCard({ resume, onClick, onDelete }: { resume: any, onClick: () => void, onDelete: () => void }) {
-  return (
-    <div className="bg-white rounded-2xl p-4 flex flex-col items-center w-full max-w-xs cursor-pointer transition hover:shadow-lg" onClick={onClick}>
-      <div className="bg-white rounded-xl w-full flex items-center justify-center overflow-hidden mb-4">
-        <img src={resume.preview} alt="Resume preview" className="object-contain w-full h-full" />
-      </div>
-      <div className="w-full flex flex-col gap-1">
-        <div className="font-serif text-lg font-medium">{resume.title}</div>
-        <div className="text-muted-foreground text-sm">{resume.date}</div>
-      </div>
-      <div className="flex gap-2 mt-2 self-end">
-        <Button variant="ghost" size="icon"><Download size={18} /></Button>
-        <Button variant="ghost" size="icon" onClick={e => { e.stopPropagation(); onDelete(); }}><Trash2 size={18} /></Button>
-      </div>
-    </div>
-  );
-}
 
 const LandingPage = () => {
   const [loading, setLoading] = useState(false);
@@ -201,11 +193,9 @@ const LandingPage = () => {
 
   // Add delete handler
   const handleDeleteResume = (id: number) => {
-    if (window.confirm('Do you want to remove it?')) {
-      const updated = userResumes.filter(r => r.id !== id);
-      setUserResumes(updated);
-      localStorage.setItem('userResumes', JSON.stringify(updated));
-    }
+    const updated = userResumes.filter(r => r.id !== id);
+    setUserResumes(updated);
+    localStorage.setItem('userResumes', JSON.stringify(updated));
   };
 
   // Prevent jumping: don't render until userLoaded
@@ -213,7 +203,7 @@ const LandingPage = () => {
 
   if (user && userResumes.length > 0) {
     return (
-      <div className="min-h-screen px-8 py-8">
+      <div className="px-8 py-8">
         <div className="flex items-center justify-between mb-8">
           <h1>My resumes</h1>
           <DropdownMenu>
@@ -227,9 +217,90 @@ const LandingPage = () => {
           </DropdownMenu>
         </div>
         <div className="flex flex-wrap gap-8 justify-center">
-          {userResumes.map(resume => (
-            <ResumeCard key={resume.id} resume={resume} onClick={() => navigate('/builder', { state: { resumeData: resume.data } })} onDelete={() => handleDeleteResume(resume.id)} />
-          ))}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>Last modified</TableHead>
+                <TableHead className="w-32 text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {userResumes.map(resume => (
+                <TableRow
+                  key={resume.id}
+                  className="cursor-pointer hover:bg-gray-50"
+                  onClick={() => navigate('/builder', { state: { resumeData: resume.data } })}
+                >
+                  <TableCell className="text-base text-bold">{resume.title}</TableCell>
+                  <TableCell className="text-base">
+                    {resume.lastModified
+                      ? new Date(resume.lastModified).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+                      : resume.date}
+                  </TableCell>
+                  <TableCell className="w-32 text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={e => {
+                        e.stopPropagation();
+                        const link = document.createElement('a');
+                        link.href = resume.preview;
+                        link.download = `${resume.title || 'resume'}.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }}
+                      aria-label="Download resume"
+                    >
+                      <Download size={20} />
+                    </Button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={e => {
+                            e.stopPropagation();
+                          }}
+                          aria-label="Delete resume"
+                        >
+                          <Trash2 size={20} />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Delete this resume?</DialogTitle>
+                          <DialogDescription>
+                            Are you sure you want to delete this resume? This action cannot be undone.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                          <DialogClose asChild>
+                            <Button
+                              variant="outline"
+                              onClick={e => e.stopPropagation()} // Prevent row click
+                            >
+                              Cancel
+                            </Button>
+                          </DialogClose>
+                          <Button
+                            variant="destructive"
+                            onClick={e => {
+                              e.stopPropagation(); // Prevent row click
+                              handleDeleteResume(resume.id);
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
         <input
           ref={fileInputRef}
