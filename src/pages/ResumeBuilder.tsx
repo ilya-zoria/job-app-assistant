@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useLayoutEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { parseResumeText } from '../lib/parseResumeText';
-import type { ParsedResume, ExperienceItem } from '../lib/parseResumeText';
+import type { ParsedResume as ParsedResumeBase, ExperienceItem } from '../lib/parseResumeText';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -23,8 +23,18 @@ import { toast } from 'sonner';
 import { TextShimmer } from '@/components/ui/text-shimmer';
 import {MagneticButton} from '@/components/ui/magnetic-button';
 import mixpanel from 'mixpanel-browser';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+
+// Extend ParsedResume to include title and id for local usage
+interface ParsedResume extends ParsedResumeBase {
+  title?: string;
+  id?: number;
+}
 
 const emptyResume: ParsedResume = {
+  id: Date.now(),
+  title: 'Untitled resume',
   fullName: '',
   jobTitle: '',
   location: '',
@@ -549,10 +559,89 @@ const ResumeBuilder = () => {
     localStorage.setItem('aiSuggestions', JSON.stringify(aiSuggestions));
   }, [aiSuggestions]);
 
+  // Add state for editing title
+  const [editingTitle, setEditingTitle] = useState(false);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  // Ensure resume has a title property
+  useEffect(() => {
+    if (!resume.title) {
+      setResume(prev => ({ ...prev, title: 'Untitled resume' }));
+    }
+  }, []);
+
+  // Focus input when editing
+  useEffect(() => {
+    if (editingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [editingTitle]);
+
+  // For account dropdown
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      setIsLoggedIn(!!userData?.user);
+      setUser(userData?.user || null);
+      setUserName(userData?.user?.user_metadata?.full_name || userData?.user?.email || null);
+    };
+    checkUser();
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      checkUser();
+    });
+    return () => {
+      listener?.subscription.unsubscribe();
+    };
+  }, []);
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  };
+
+  // Save title to localStorage and update LandingPage resumes
+  const saveTitle = (newTitle: string) => {
+    setResume(prev => {
+      const updated = { ...prev, title: newTitle, lastModified: new Date().toISOString() };
+      // Update in localStorage resumes array if exists
+      const resumesRaw = localStorage.getItem('userResumes');
+      if (resumesRaw) {
+        const resumes = JSON.parse(resumesRaw);
+        // Find by id if present, else by data equality fallback
+        const idx = resumes.findIndex((r: any) => (r.data && r.data.id && updated.id && r.data.id === updated.id) || (r.data && JSON.stringify(r.data) === JSON.stringify(prev)));
+        if (idx !== -1) {
+          resumes[idx].title = newTitle;
+          resumes[idx].lastModified = updated.lastModified;
+          resumes[idx].data = { ...resumes[idx].data, title: newTitle, lastModified: updated.lastModified, id: updated.id };
+          localStorage.setItem('userResumes', JSON.stringify(resumes));
+        }
+      }
+      localStorage.setItem('resumeData', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   return (
     <>
       {measuringContainer}
-      <Header variant="resume-builder" onDownload={handleDownload} />
+      <Header
+        variant="resume-builder"
+        title={resume.title || ''}
+        onTitleChange={t => {
+          setResume(prev => ({ ...prev, title: t }));
+          saveTitle(t);
+        }}
+        editingTitle={editingTitle}
+        setEditingTitle={setEditingTitle}
+        titleInputRef={titleInputRef}
+        onDownload={handleDownload}
+        showAppIcon={false}
+      />
+      {/* Old header replaced by above */}
+      {/* <Header variant="resume-builder" onDownload={handleDownload} /> */}
       <div className="h-auto flex flex-col md:flex-row gap-8 overflow-x-hidden px-4 md:px-8">
         {/* Left: Tabs and Editor/Tailor content */}
         <div className="flex-1 min-w-[350px] max-w-[700px] bg-white rounded-xl p-10 h-full max-h-screen overflow-y-auto mb-8">
