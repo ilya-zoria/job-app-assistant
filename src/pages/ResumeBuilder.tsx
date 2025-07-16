@@ -25,6 +25,9 @@ import {MagneticButton} from '@/components/ui/magnetic-button';
 import mixpanel from 'mixpanel-browser';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { updateResume, fetchResumes } from '@/lib/resumeApi';
+import type { ResumeData } from '@/lib/resumeApi';
+import Spinner from '@/components/ui/spinner';
 
 // Extend ParsedResume to include title and id for local usage
 interface ParsedResume extends ParsedResumeBase {
@@ -54,6 +57,7 @@ const ResumeBuilder = () => {
   const navigate = useNavigate();
   const ocrText = location.state?.ocrText || '';
   const resumeData = location.state?.resumeData;
+  const resumeId = location.state?.resumeId;
   const getInitialResume = () => {
     if (resumeData) return resumeData;
     if (location.state?.ocrText) return parseResumeText(location.state.ocrText);
@@ -62,6 +66,7 @@ const ResumeBuilder = () => {
     return emptyResume;
   };
   const [resume, setResume] = useState<ParsedResume>(getInitialResume());
+  const [loadingResume, setLoadingResume] = useState(false);
 
   // Granular page splitting state
   const [pages, setPages] = useState<JSX.Element[][]>([]);
@@ -492,6 +497,46 @@ const ResumeBuilder = () => {
     }
   }, [resumeData, ocrText]);
 
+  // Load resume from Supabase if logged in and resumeId is present
+  useEffect(() => {
+    async function loadResumeFromSupabase() {
+      if (!resumeId) return;
+      setLoadingResume(true);
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user && resumeId) {
+        const resumes = await fetchResumes();
+        const found = resumes.find((r: any) => r.id === resumeId);
+        if (found) {
+          setResume({ ...found.resume_data, id: found.id, title: found.resume_name });
+          if (found.ai_suggestion) setAISuggestions(found.ai_suggestion);
+        }
+      }
+      setLoadingResume(false);
+    }
+    loadResumeFromSupabase();
+    // eslint-disable-next-line
+  }, [resumeId]);
+
+  // Auto-save to Supabase on resume change (debounced in production)
+  useEffect(() => {
+    async function saveToSupabase() {
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user && resumeId) {
+        await updateResume(resumeId, {
+          resume_name: resume.title || 'Untitled resume',
+          resume_data: resume,
+          ai_suggestion: aiSuggestions,
+          // Add custom_ques and cover_letter if you use them
+        });
+      } else {
+        // Fallback to localStorage for guests
+        localStorage.setItem('resumeData', JSON.stringify(resume));
+      }
+    }
+    saveToSupabase();
+    // eslint-disable-next-line
+  }, [resume, aiSuggestions, resumeId]);
+
   // Sync modalQuestions with jobDetails when dialog opens
   useEffect(() => {
     if (dialogOpen) {
@@ -623,6 +668,14 @@ const ResumeBuilder = () => {
       return updated;
     });
   };
+
+  if (loadingResume) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Spinner size={40} />
+      </div>
+    );
+  }
 
   return (
     <>
