@@ -29,6 +29,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { createResume, fetchResumes, deleteResume } from '@/lib/resumeApi';
 import type { ResumeData } from '@/lib/resumeApi';
 import Spinner from '@/components/ui/spinner';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
+import { getResumeBlocks } from '@/components/getResumeBlocks';
+import SectionHeading from '@/components/SectionHeading';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
@@ -49,6 +53,8 @@ const LandingPage = () => {
   // Add a loading state for user
   const [userLoaded, setUserLoaded] = useState(false);
   const [resumesLoaded, setResumesLoaded] = useState(false);
+  // Add a ref for the preview container
+  const previewRef = useRef<HTMLDivElement>(null);
 
   // Move pdfToImages above extractOcrTextFromFile so it's defined before use
   const pdfToImages = async (file: File): Promise<string[]> => {
@@ -473,14 +479,42 @@ const LandingPage = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={e => {
+                      onClick={async e => {
                         e.stopPropagation();
-                        const link = document.createElement('a');
-                        link.href = resume.preview;
-                        link.download = `${resume.resume_name || resume.title || 'resume'}.png`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
+                        if (resume.resume_data) {
+                          // Render the preview in a hidden container
+                          const container = document.createElement('div');
+                          container.style.position = 'absolute';
+                          container.style.left = '-9999px';
+                          document.body.appendChild(container);
+                          // Render the preview using React 18 API
+                          import('react-dom/client').then(({ createRoot }) => {
+                            const root = createRoot(container);
+                            root.render(renderResumePreview(resume));
+                            setTimeout(async () => {
+                              await html2pdf()
+                                .set({
+                                  margin: 0,
+                                  filename: `${resume.resume_name || resume.title || 'resume'}.pdf`,
+                                  html2canvas: { scale: 2 },
+                                  jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' },
+                                  pagebreak: { mode: ['css', 'legacy'] }
+                                })
+                                .from(container)
+                                .save();
+                              root.unmount();
+                              document.body.removeChild(container);
+                            }, 100);
+                          });
+                        } else {
+                          // Fallback: download as PNG (original logic)
+                          const link = document.createElement('a');
+                          link.href = resume.preview;
+                          link.download = `${resume.resume_name || resume.title || 'resume'}.png`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        }
                       }}
                       aria-label="Download resume"
                     >
@@ -582,5 +616,20 @@ const LandingPage = () => {
     </div>
   );
 };
+
+// Add a function to render the resume preview (reuse getResumeBlocks from ResumeBuilder if possible)
+function renderResumePreview(resume: any) {
+  // Use the shared getResumeBlocks for full resume rendering
+  const blocks = getResumeBlocks(resume.resume_data || resume.data || resume, true);
+  return (
+    <div className="bg-white rounded-xl w-[816px] mx-auto mb-8 p-10 max-w-full">
+      <div className="flex flex-col gap-5">
+        {blocks.map((block: any) => (
+          <div key={block.key}>{block.jsx}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default LandingPage; 
