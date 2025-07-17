@@ -30,16 +30,19 @@ export interface CreateResumeParams {
 export async function createResume({ resume_name, resume_data, ai_suggestions, custom_questions, cover_letter, user_id }: CreateResumeParams) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not logged in');
+  const insertPayload = {
+    resume_name,
+    resume_data,
+    ai_suggestions,
+    custom_questions,
+    cover_letter,
+    user_id: user_id || user.id,
+  };
+  console.log('Insert payload:', insertPayload);
+  console.log('Authenticated user_id:', user.id);
   const { data, error } = await supabase
     .from('resumes')
-    .insert([{
-      resume_name,
-      resume_data,
-      ai_suggestions,
-      custom_questions,
-      cover_letter,
-      user_id: user_id || user.id,
-    }])
+    .insert([insertPayload])
     .select()
     .single();
   if (error) throw error;

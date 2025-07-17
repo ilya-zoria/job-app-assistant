@@ -130,22 +130,25 @@ const LandingPage = () => {
         if (user) {
           // Save uploaded resume to Supabase
           const resumeData: ResumeData = { ...parsedResume };
-          const { data: userData } = await supabase.auth.getUser();
-          if (!userData || !userData.user) {
-            toast.error('User not authenticated.');
+          const { data: sessionData } = await supabase.auth.getSession();
+          console.log('Session:', sessionData);
+          console.log('supabase.auth.getUser():', await supabase.auth.getUser());
+          console.log('LocalStorage:', localStorage.getItem('sb-knkucoivmrezvkxyifpn-auth-token'));
+          if (!sessionData || !sessionData.session || !sessionData.session.user) {
+            toast.error('No active session. Please log in again.');
             setLoading(false);
             return;
           }
           const payload = {
             resume_name: file.name.replace(/\.[^/.]+$/, '') || 'Resume name',
-            user_id: userData.user.id,
+            user_id: sessionData.session.user.id,
             resume_data: resumeData,
             ai_suggestions: {},
             custom_questions: [],
             cover_letter: '',
           };
           console.log('user_id in payload:', payload.user_id);
-          console.log('auth.uid() in session:', userData.user.id);
+          console.log('auth.uid() in session:', sessionData.session.user.id);
           const created = await createResume(payload);
           toast.success('Resume processed!', { id: toastId });
           navigate('/builder', { state: { resumeData: created.resume_data, resumeId: created.id } });
