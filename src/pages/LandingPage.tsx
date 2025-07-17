@@ -26,7 +26,7 @@ import { Download, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { parseResumeText } from '../lib/parseResumeText';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
-import { createResume, fetchResumes } from '@/lib/resumeApi';
+import { createResume, fetchResumes, deleteResume } from '@/lib/resumeApi';
 import type { ResumeData } from '@/lib/resumeApi';
 import Spinner from '@/components/ui/spinner';
 
@@ -344,10 +344,22 @@ const LandingPage = () => {
   };
 
   // Add delete handler
-  const handleDeleteResume = (id: number) => {
-    const updated = userResumes.filter(r => r.id !== id);
-    setUserResumes(updated);
-    localStorage.setItem('userResumes', JSON.stringify(updated));
+  const handleDeleteResume = async (id: string) => {
+    if (user) {
+      try {
+        await deleteResume(id);
+        const resumes = await fetchResumes();
+        setUserResumes(resumes || []);
+        toast.success('Resume deleted!');
+      } catch (e) {
+        toast.error('Failed to delete resume');
+      }
+    } else {
+      const updated = userResumes.filter(r => r.id !== id);
+      setUserResumes(updated);
+      localStorage.setItem('userResumes', JSON.stringify(updated));
+      toast.success('Resume deleted!');
+    }
   };
 
   // Prevent jumping: don't render until userLoaded
@@ -445,13 +457,17 @@ const LandingPage = () => {
                 <TableRow
                   key={resume.id}
                   className="cursor-pointer hover:bg-gray-50"
-                  onClick={() => navigate('/builder', { state: { resumeData: resume.data } })}
+                  onClick={() => navigate('/builder', { state: { resumeData: resume.resume_data || resume.data, resumeId: resume.id } })}
                 >
-                  <TableCell className="text-base text-bold">{resume.title}</TableCell>
+                  <TableCell className="text-base text-bold">
+                    {resume.resume_name || resume.title || 'Untitled resume'}
+                  </TableCell>
                   <TableCell className="text-base">
-                    {resume.lastModified
-                      ? new Date(resume.lastModified).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
-                      : resume.date}
+                    {resume.updated_at
+                      ? new Date(resume.updated_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+                      : resume.lastModified
+                        ? new Date(resume.lastModified).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+                        : resume.date}
                   </TableCell>
                   <TableCell className="w-32 text-right">
                     <Button
@@ -461,7 +477,7 @@ const LandingPage = () => {
                         e.stopPropagation();
                         const link = document.createElement('a');
                         link.href = resume.preview;
-                        link.download = `${resume.title || 'resume'}.png`;
+                        link.download = `${resume.resume_name || resume.title || 'resume'}.png`;
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);

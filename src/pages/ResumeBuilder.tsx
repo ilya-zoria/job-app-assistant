@@ -136,7 +136,7 @@ const ResumeBuilder = () => {
       jsx: (
         <div className="text-center mb-2">
           <div className="text-3xl font-serif font-bold leading-tight">{resume.fullName || 'Full Name'}</div>
-          <div className="text-md font-semibold mt-2 mb-2">{resume.jobTitle || 'Job Title'}</div>
+          <div className="text-lg font-semibold mt-2 mb-2">{resume.jobTitle || 'Job Title'}</div>
           <div className="text-sm mt-2">
             {resume.location && <span>{resume.location} | </span>}
             {resume.email && <span>{resume.email} | </span>}
@@ -497,35 +497,83 @@ const ResumeBuilder = () => {
     }
   }, [resumeData, ocrText]);
 
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+
   // Load resume from Supabase if logged in and resumeId is present
   useEffect(() => {
-    async function loadResumeFromSupabase() {
+    async function loadResumeAndAISuggestionsFromSupabase() {
       if (!resumeId) return;
       setLoadingResume(true);
       const { data: userData } = await supabase.auth.getUser();
       if (userData?.user && resumeId) {
         const resumes = await fetchResumes();
+        console.log('Fetched resumes:', resumes);
         const found = resumes.find((r: any) => r.id === resumeId);
+        console.log('Found resume:', found);
         if (found) {
           setResume({ ...found.resume_data, id: found.id, title: found.resume_name });
-          if (found.ai_suggestion) setAISuggestions(found.ai_suggestion);
+          const suggestions = typeof found.ai_suggestions === 'string'
+            ? JSON.parse(found.ai_suggestions)
+            : found.ai_suggestions || {};
+          setAISuggestions(suggestions);
+          // Restore jobDetails from Supabase if present
+          const dbJobDetails = typeof found.job_details === 'string'
+            ? JSON.parse(found.job_details)
+            : found.job_details || {};
+          setJobDetails((prev: any) => ({ ...dbJobDetails, ...prev }));
+          // Show AI suggestions tab if any suggestion exists
+          if (
+            (suggestions.summary && suggestions.summary.trim()) ||
+            (Array.isArray(suggestions.workExperience) && suggestions.workExperience.length > 0) ||
+            (suggestions.skills && suggestions.skills.trim()) ||
+            (suggestions.tools && suggestions.tools.trim()) ||
+            (Array.isArray(suggestions.customQuestionAnswers) && suggestions.customQuestionAnswers.length > 0) ||
+            (suggestions.coverLetter && suggestions.coverLetter.trim())
+          ) {
+            setShowAISuggestions(true);
+          } else {
+            setShowAISuggestions(false);
+          }
+          // Restore jobDetails for custom questions and cover letter if present in aiSuggestions
+          if (
+            Array.isArray(suggestions.customQuestionAnswers) &&
+            suggestions.customQuestionAnswers.length > 0
+          ) {
+            setJobDetails((prev: any) => ({
+              ...prev,
+              customQuestions: prev.customQuestions && prev.customQuestions.length === suggestions.customQuestionAnswers.length
+                ? prev.customQuestions
+                : Array(suggestions.customQuestionAnswers.length).fill('Custom question'),
+            }));
+          }
+          if (suggestions.coverLetter && suggestions.coverLetter.trim()) {
+            setJobDetails((prev: any) => ({
+              ...prev,
+              generateCoverLetter: true,
+            }));
+          }
         }
       }
       setLoadingResume(false);
+      setInitialLoadComplete(true); // <-- set this after loading
     }
-    loadResumeFromSupabase();
+    loadResumeAndAISuggestionsFromSupabase();
     // eslint-disable-next-line
   }, [resumeId]);
 
   // Auto-save to Supabase on resume change (debounced in production)
   useEffect(() => {
+    if (!initialLoadComplete) return; // <-- only save after initial load
     async function saveToSupabase() {
       const { data: userData } = await supabase.auth.getUser();
       if (userData?.user && resumeId) {
+        const { company, jobTitle, jobDescription, customQuestions } = jobDetails;
+        const jobDetailsToSave = { company, jobTitle, jobDescription, customQuestions };
         await updateResume(resumeId, {
           resume_name: resume.title || 'Untitled resume',
           resume_data: resume,
-          ai_suggestion: aiSuggestions,
+          ai_suggestions: aiSuggestions,
+          job_details: jobDetailsToSave, // <-- save job details as jsonb
           // Add custom_ques and cover_letter if you use them
         });
       } else {
@@ -535,7 +583,7 @@ const ResumeBuilder = () => {
     }
     saveToSupabase();
     // eslint-disable-next-line
-  }, [resume, aiSuggestions, resumeId]);
+  }, [resume, aiSuggestions, jobDetails, resumeId, initialLoadComplete]);
 
   // Sync modalQuestions with jobDetails when dialog opens
   useEffect(() => {
@@ -600,8 +648,15 @@ const ResumeBuilder = () => {
     setJobDetails((prev: any) => ({ ...prev, generateCoverLetter: false }));
   };
 
+  // Only sync aiSuggestions to localStorage if not logged in
   useEffect(() => {
-    localStorage.setItem('aiSuggestions', JSON.stringify(aiSuggestions));
+    const syncToLocal = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) {
+        localStorage.setItem('aiSuggestions', JSON.stringify(aiSuggestions));
+      }
+    };
+    syncToLocal();
   }, [aiSuggestions]);
 
   // Add state for editing title
@@ -983,6 +1038,7 @@ const ResumeBuilder = () => {
 };
 
 function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSection, setHoveredSection, resume, setResume, setAISuggestions }: any) {
+  console.log("TailoredAISuggestions props - aiSuggestions:", aiSuggestions);
   const [regenerating, setRegenerating] = React.useState<string | null>(null);
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -1096,9 +1152,12 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
       setRegenerating(null);
     }
   };
+  // Defensive defaults
+  const workExperience = Array.isArray(aiSuggestions.workExperience) ? aiSuggestions.workExperience : [];
+  const customQuestionAnswers = Array.isArray(aiSuggestions.customQuestionAnswers) ? aiSuggestions.customQuestionAnswers : [];
   const hasAISuggestions = Boolean(
     (aiSuggestions.summary && aiSuggestions.summary.trim()) ||
-    (aiSuggestions.workExperience && aiSuggestions.workExperience.length > 0) ||
+    (workExperience.length > 0) ||
     (aiSuggestions.skills && aiSuggestions.skills.trim()) ||
     (aiSuggestions.tools && aiSuggestions.tools.trim())
   );
@@ -1118,7 +1177,7 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
             <AccordionTrigger>AI suggestions</AccordionTrigger>
             <AccordionContent className="flex flex-col gap-4">
               {/* Summary */}
-              {aiSuggestions.summary && (
+              {typeof aiSuggestions?.summary === 'string' && aiSuggestions.summary.trim() && (
                 <div>
                   <div className="font-semibold mb-2">Summary</div>
                   <AISuggestionField
@@ -1135,36 +1194,37 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
                 </div>
               )}
               {/* Work Experience */}
-              {aiSuggestions.workExperience && aiSuggestions.workExperience.length > 0 && (
+              {workExperience.length > 0 && (
                 <div>
                   <div className="font-semibold mb-2">Work experience</div>
-                  {aiSuggestions.workExperience.map((exp: any, i: number) => (
-                    <div key={i} className="mb-3">
-                      <AISuggestionField
-                        sectionKey={`work-${i}`}
-                        hoveredSection={hoveredSection}
-                        setHoveredSection={setHoveredSection}
-                        mode="ai"
-                        onAccept={() => handleAccept(`work-${i}`, i)}
-                        onDecline={() => handleDecline(`work-${i}`, i)}
-                        onRegenerate={() => handleRegenerate(`work-${i}`, i)}
-                      >
-                        {regenerating === `work-${i}` ? <TextShimmer>Regenerating...</TextShimmer> : (
-                          <div className="w-full">
-                            <div className="font-medium">{exp.company} — {exp.title}</div>
-                            {/* Date removed as requested */}
-                            <ul className="list-disc pl-5">
-                              {exp.bullets.map((b: string, j: number) => <li key={j}>{b}</li>)}
-                            </ul>
-                          </div>
-                        )}
-                      </AISuggestionField>
-                    </div>
-                  ))}
+                  {workExperience.map((exp: any, i: number) =>
+                    exp ? (
+                      <div key={i} className="mb-3">
+                        <AISuggestionField
+                          sectionKey={`work-${i}`}
+                          hoveredSection={hoveredSection}
+                          setHoveredSection={setHoveredSection}
+                          mode="ai"
+                          onAccept={() => handleAccept(`work-${i}`, i)}
+                          onDecline={() => handleDecline(`work-${i}`, i)}
+                          onRegenerate={() => handleRegenerate(`work-${i}`, i)}
+                        >
+                          {regenerating === `work-${i}` ? <TextShimmer>Regenerating...</TextShimmer> : (
+                            <div className="w-full">
+                              <div className="font-medium">{exp.company} — {exp.title}</div>
+                              <ul className="list-disc pl-5">
+                                {Array.isArray(exp.bullets) && exp.bullets.map((b: string, j: number) => <li key={j}>{b}</li>)}
+                              </ul>
+                            </div>
+                          )}
+                        </AISuggestionField>
+                      </div>
+                    ) : null
+                  )}
                 </div>
               )}
               {/* Skills */}
-              {aiSuggestions.skills && (
+              {typeof aiSuggestions?.skills === 'string' && aiSuggestions.skills.trim() && (
                 <div>
                   <div className="font-semibold mb-2">Skills</div>
                   <AISuggestionField
@@ -1181,7 +1241,7 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
                 </div>
               )}
               {/* Tools */}
-              {aiSuggestions.tools && (
+              {typeof aiSuggestions?.tools === 'string' && aiSuggestions.tools.trim() && (
                 <div>
                   <div className="font-semibold mb-2">Tools</div>
                   <AISuggestionField
@@ -1201,7 +1261,8 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
           </AccordionItem>
         )}
         {/* Custom Questions Section */}
-        {jobDetails.customQuestions && jobDetails.customQuestions.length > 0 && aiSuggestions.customQuestionAnswers && aiSuggestions.customQuestionAnswers.length > 0 && (
+        {Array.isArray(jobDetails?.customQuestions) && jobDetails.customQuestions.length > 0 &&
+         customQuestionAnswers.length > 0 && (
           <AccordionItem value="custom-questions">
             <AccordionTrigger>Custom questions</AccordionTrigger>
             <AccordionContent>
@@ -1213,10 +1274,10 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
                     hoveredSection={hoveredSection}
                     setHoveredSection={setHoveredSection}
                     mode="copy"
-                    onCopy={() => handleCopy(aiSuggestions.customQuestionAnswers[idx])}
+                    onCopy={() => handleCopy(customQuestionAnswers[idx])}
                     onRegenerate={() => handleRegenerate(`custom-question-${idx}`, idx)}
                   >
-                    {regenerating === `custom-question-${idx}` ? <TextShimmer>Regenerating...</TextShimmer> : aiSuggestions.customQuestionAnswers[idx]}
+                    {regenerating === `custom-question-${idx}` ? <TextShimmer>Regenerating...</TextShimmer> : customQuestionAnswers[idx]}
                   </AISuggestionField>
                 </div>
               ))}
@@ -1224,7 +1285,7 @@ function TailoredAISuggestions({ jobDetails, aiSuggestions, onEditJob, hoveredSe
           </AccordionItem>
         )}
         {/* Cover Letter Section */}
-        {jobDetails.generateCoverLetter && aiSuggestions.coverLetter && (
+        {typeof aiSuggestions?.coverLetter === 'string' && aiSuggestions.coverLetter.trim() && (
           <AccordionItem value="cover-letter">
             <AccordionTrigger>Cover letter</AccordionTrigger>
             <AccordionContent>

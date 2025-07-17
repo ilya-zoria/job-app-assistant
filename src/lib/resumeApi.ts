@@ -24,6 +24,7 @@ export interface CreateResumeParams {
   custom_questions?: any;
   cover_letter?: string;
   user_id?: string;
+  job_details?: any;
 }
 
 // CREATE
